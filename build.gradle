@@ -1,8 +1,8 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
     ext.android_plugin_version = '7.3.1'
-    ext.kotlin_version = '1.7.10'
-    ext.kotlinx_version = '1.6.0'
+    ext.kotlin_version = '1.7.20'
+    ext.kotlinx_version = '1.6.4'
     repositories {
         flatDir dirs: "gradle/plugins"
         google()
@@ -44,41 +44,41 @@ ext {
     vlcMajorVersion = project.hasProperty('forceVlc4') && project.getProperty('forceVlc4') ? 4 : 3
     libvlcVersion = vlcMajorVersion == 3 ? '3.6.0-eap6' :'4.0.0-eap9'
     medialibraryVersion = vlcMajorVersion == 3 ? '0.13.13-rc6' : '0.13.13-vlc4-r6'
-    minSdkVersion = 17
+    minSdkVersion = 21
     targetSdkVersion = 33
     compileSdkVersion = 33
     buildToolsVersion = '33.0.1'
     androidxLegacyVersion = '1.0.0'
-    androidxCoreVersion = '1.7.0'
-    appCompatVersion = '1.4.1'
+    androidxCoreVersion = '1.9.0'
+    appCompatVersion = '1.6.1'
     lifecycleVersion = '2.5.1'
     androidxPreferencesVersion = '1.1.1'
     androidxVersion = '1.1.0'
-    androidxActivityVersion = '1.6.0'
-    androidxFragmentVersion = '1.5.3'
+    androidxActivityVersion = '1.6.1'
+    androidxFragmentVersion = '1.5.5'
     androidxAnnotationVersion = '1.5.0'
     androidxRecyclerviewVersion = '1.2.1'
     androidxMediaVersion = '1.1.0'
     androidxLeanbackVersion = '1.0.0'
-    androidxMaterialVersion = '1.7.0'
+    androidxMaterialVersion = '1.8.0'
     constraintLayoutVersion = '2.1.4'
     viewPager2Version = "1.0.0"
     archVersion = '2.1.0'
-    roomVersion = '2.4.3'
+    roomVersion = '2.5.0'
     pagingVersion = '3.1.1'
     junitVersion = '4.13.2'
-    junitExtVersion = '1.1.2'
-    mockito = '2.25.0'
+    junitExtVersion = '1.1.3'
+    mockito = '5.2.0'
     //Retrofit 2.7 drops Android 5 support
-    retrofit = '2.7.1'
-    moshi = '1.8.0'
-    powerMock = '2.0.2'
+    retrofit = '2.9.0'
+    moshi = '1.14.0'
+    powerMock = '2.0.9'
     espressoVersion = '3.4.0'
-    livedataTest = '1.2.0'
-    robolectric = '4.3.1'
-    mockk = '1.9.3'
+    livedataTest = '1.3.0'
+    robolectric = '4.8.1'
+    mockk = '1.13.4'
     testRunner = '1.4.0'
-    orchestrator = '1.1.0'
+    orchestrator = '1.4.1'
     testCore = '1.4.0'
 //    versionCode scheme is T M NN RR AA
 //    T: Target/Flavour (1 for Android, 2 for Chrome?)

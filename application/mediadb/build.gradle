@@ -69,7 +69,7 @@ dependencies {
     androidTestImplementation "androidx.test.espresso:espresso-core:$rootProject.ext.espressoVersion"
     //Room
     implementation "androidx.room:room-ktx:$rootProject.ext.roomVersion"
-    kapt ('org.xerial:sqlite-jdbc:3.36.0')
+    kapt ('org.xerial:sqlite-jdbc:3.41.2.1')
     kapt "androidx.room:room-compiler:$rootProject.ext.roomVersion"
     implementation project(':application:tools')
     implementation project(':application:resources')
