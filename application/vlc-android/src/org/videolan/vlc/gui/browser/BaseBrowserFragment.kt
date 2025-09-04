@@ -44,6 +44,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.preference.PreferenceGroup
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -84,6 +85,7 @@ import org.videolan.tools.KeyHelper
 import org.videolan.tools.MultiSelectHelper
 import org.videolan.tools.Settings
 import org.videolan.tools.dp
+import org.videolan.tools.getposition
 import org.videolan.tools.isStarted
 import org.videolan.tools.putSingle
 import org.videolan.tools.removeFileScheme
@@ -148,6 +150,7 @@ import org.videolan.vlc.util.SchedulerCallback
 import org.videolan.vlc.util.isSchemeSupported
 import org.videolan.vlc.util.isTalkbackIsEnabled
 import org.videolan.vlc.util.launchWhenStarted
+import org.videolan.vlc.util.onAnyChange
 import org.videolan.vlc.viewmodels.PlaylistModel
 import org.videolan.vlc.viewmodels.browser.BrowserModel
 import java.io.File
@@ -156,6 +159,7 @@ import java.util.LinkedList
 private const val TAG = "VLC/BaseBrowserFragment"
 
 internal const val KEY_MEDIA = "key_media"
+internal const val KEY_JUMP_TO = "key_jump_to"
 const val KEY_PICKER_TYPE = "key_picker_type"
 private const val MSG_SHOW_LOADING = "msg_show_loading"
 internal const val MSG_HIDE_LOADING = "msg_hide_loading"
@@ -170,6 +174,7 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
     private lateinit var layoutManager: LinearLayoutManager
     override var mrl: String? = null
     protected var currentMedia: MediaWrapper? = null
+    protected var currentJumpTo: MediaWrapper? = null
     override var isRootDirectory: Boolean = false
     override val scannedDirectory = false
     override var inCards = true
@@ -195,6 +200,7 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
         val bundle = savedInstanceState ?: arguments
         if (bundle != null) {
             currentMedia = bundle.parcelable(KEY_MEDIA)
+            currentJumpTo = bundle.parcelable(KEY_JUMP_TO)
             mrl = currentMedia?.location ?: bundle.getString(KEY_MRL)
         } else if (requireActivity().intent != null) {
             mrl = requireActivity().intent.dataString
@@ -267,6 +273,19 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
             adapter.update(mediaLibraryItems!!)
             if (::addPlaylistFolderOnly.isInitialized) addPlaylistFolderOnly.isVisible = adapter.mediaCount > 0
         }
+        adapter.onAnyChange {
+            if (currentJumpTo != null) {
+                val position = adapter.dataset.getposition(currentJumpTo)
+                binding.networkList.postDelayed({
+                    binding.networkList.layoutManager?.findViewByPosition(position)?.isPressed  = true
+                    binding.networkList.postDelayed({
+                        binding.networkList.layoutManager?.findViewByPosition(position)?.isPressed  = false
+                            }, 600)
+                }, 200)
+                binding.networkList.scrollToPosition(position)
+                currentJumpTo = null
+            }
+        }
         viewModel.getDescriptionUpdate().observe(viewLifecycleOwner) { pair -> if (pair != null) adapter.notifyItemChanged(pair.first, pair.second) }
         viewModel.loading.observe(viewLifecycleOwner) { loading ->
             swipeRefreshLayout.isRefreshing = loading
@@ -305,6 +324,11 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
                     }
                 }
                 viewModel.refresh()
+            }
+        }
+        lifecycleScope.launch {
+            PlaylistManager.shuffling.collect {
+                setupFab()
             }
         }
     }
@@ -397,12 +421,16 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
             it?.addCallback(this)
         }.launchIn(startedScope)
 
+        setupFab()
+        (activity as? AudioPlayerContainerActivity)?.expandAppBar()
+    }
+
+    private fun setupFab() {
         fabPlay?.run {
-            setImageResource(R.drawable.ic_fab_play)
+            setImageResource(if (PlaylistManager.shuffling.value) R.drawable.ic_fab_shuffle else R.drawable.ic_fab_play)
             updateFab()
             fabPlay?.contentDescription = getString(R.string.play)
         }
-        (activity as? AudioPlayerContainerActivity)?.expandAppBar()
     }
 
 
@@ -579,7 +607,7 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
                     }
             }
             scheduler.startAction(MSG_HIDE_ENQUEUING)
-            activity?.let { MediaUtils.openList(it, mediaLocations, positionInPlaylist) }
+            activity?.let { MediaUtils.openList(it, mediaLocations, positionInPlaylist, shuffle = PlaylistManager.shuffling.value) }
         }
     }
 
@@ -795,6 +823,8 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
                     if (!isAudio && isMedia) add(CTX_PLAY_AS_AUDIO)
                     if (!isMedia) add(CTX_PLAY)
                     if (isVideo) add(CTX_DOWNLOAD_SUBTITLES)
+                    if ((isVideo || mw.isPodcast) && mw.seen > 0L) add(ContextOption.CTX_MARK_AS_UNPLAYED)
+                    if ((isVideo || mw.isPodcast) && mw.seen == 0L) add(ContextOption.CTX_MARK_AS_PLAYED)
                 }
                 add(CTX_PLAY_NEXT)
             }
@@ -870,6 +900,16 @@ abstract class BaseBrowserFragment : MediaBrowserFragment<BrowserModel>(), IRefr
 
             CTX_ADD_FOLDER_AND_SUB_PLAYLIST -> {
                 requireActivity().addToPlaylistAsync(mw.uri.toString(), true, mw.title)
+            }
+            ContextOption.CTX_MARK_AS_UNPLAYED -> {
+                mw.setPlayCount(0L)
+                mw.seen = 0L
+                adapter.notifyItemChanged(position)
+            }
+            ContextOption.CTX_MARK_AS_PLAYED -> {
+                mw.setPlayCount(mw.seen + 1L)
+                mw.seen = mw.seen + 1L
+                adapter.notifyItemChanged(position)
             }
 
             else -> {}

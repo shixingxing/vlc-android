@@ -23,6 +23,8 @@ fail()
 
 RELEASE=0
 RESET=0
+# Indicates the license of contribs
+AVLC_CONTRIB_LICENSE=g
 while [ $# -gt 0 ]; do
     case $1 in
         help|--help|-h)
@@ -32,6 +34,7 @@ while [ $# -gt 0 ]; do
             echo "  X86:     x86, x86_64"
             echo "Use --release to build in release mode"
             echo "Use --signrelease to build in release mode and sign apk, see vlc-android/build.gradle"
+            echo "Use --reset to reset code from git"
             echo "Use -s to set your keystore file and -p for the password"
             echo "Use -c to get a ChromeOS build"
             echo "Use -l to build only LibVLC"
@@ -39,7 +42,11 @@ while [ $# -gt 0 ]; do
             echo "Use -b to bypass libvlc source checks (vlc custom sources)"
             echo "Use -t to use prebuilt contribs for LibVLC"
             echo "Use -m2 to set the maven local repository path to use"
-            echo "Use -tv to include the TV module"
+            echo "Use --static-cpp to use the static C++ runtime"
+            echo "Use --license <l> to build contribs with license l"
+            echo "   g: GPLv3 (default)"
+            echo "   l: LGPLv3 + ad-clauses"
+            echo "   a: LGPLv2 + ad-clauses"
             exit 0
             ;;
         a|-a)
@@ -63,6 +70,10 @@ while [ $# -gt 0 ]; do
             ;;
         -m2|--local-maven)
             M2_REPO=$2
+            shift
+            ;;
+        --license)
+            AVLC_CONTRIB_LICENSE=$2
             shift
             ;;
         -l)
@@ -99,9 +110,8 @@ while [ $# -gt 0 ]; do
         -vlc4)
             FORCE_VLC_4=1
             ;;
-        -tv)
-            NO_TV=1
-            RELEASE=1
+        --static-cpp)
+            AVLC_STATIC_CXX=1
             ;;
         *)
             diagnostic "$0: Invalid option '$1'."
@@ -121,17 +131,17 @@ fi
 if [ -z "$ANDROID_ABI" ]; then
    diagnostic "*** No ANDROID_ABI defined architecture: using arm64-v8a"
    ANDROID_ABI="arm64-v8a"
-   ARCH="arm64"
-   TRIPLET="aarch64-linux-android"
+elif [ "$ANDROID_ABI" = "arm64" ]; then
+    ANDROID_ABI="arm64-v8a"
+elif [ "$ANDROID_ABI" = "arm" ]; then
+    ANDROID_ABI="armeabi-v7a"
 fi
 
-if [ "$ANDROID_ABI" = "armeabi-v7a" ] || [ "$ANDROID_ABI" = "arm" ]; then
-    ANDROID_ABI="armeabi-v7a"
+if [ "$ANDROID_ABI" = "armeabi-v7a" ]; then
     GRADLE_ABI="ARMv7"
     ARCH="arm"
     TRIPLET="arm-linux-androideabi"
-elif [ "$ANDROID_ABI" = "arm64-v8a" ] || [ "$ANDROID_ABI" = "arm64" ]; then
-    ANDROID_ABI="arm64-v8a"
+elif [ "$ANDROID_ABI" = "arm64-v8a" ]; then
     GRADLE_ABI="ARMv8"
     ARCH="arm64"
     TRIPLET="aarch64-linux-android"
@@ -252,26 +262,38 @@ if [ ! -d "$ANDROID_SDK/licenses" ]; then
     echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" >> "$ANDROID_SDK/licenses/android-sdk-license"
 fi
 
+if [ "$FORCE_VLC_4" = 1 ]; then
+    gradle_prop="-PforceVlc4=true"
+fi
+
 ##########
 # GRADLE #
 ##########
 
-if [ ! -d "gradle/wrapper" ]; then
-    diagnostic "Downloading gradle"
+if [ ! -e "./gradlew" ] || [ ! -x "./gradlew" ]; then
+    diagnostic "gradlew not found"
+    # the SHA256 is found in https://gradle.org/release-checksums/
     GRADLE_VERSION=8.13
     GRADLE_SHA256=20f1b1176237254a6fc204d8434196fa11a4cfb387567519c61556e8710aed78
     GRADLE_URL=https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip
-    wget ${GRADLE_URL} 2>/dev/null || curl -O ${GRADLE_URL} || fail "gradle: download failed"
-    echo $GRADLE_SHA256 gradle-${GRADLE_VERSION}-bin.zip | sha256sum -c || fail "gradle: hash mismatch"
+    GRADLE_DOWNLOADED_ZIP=gradle-${GRADLE_VERSION}-bin.zip
 
-    unzip -o gradle-${GRADLE_VERSION}-bin.zip || fail "gradle: unzip failed"
+    export PATH="$(pwd -P)/gradle-${GRADLE_VERSION}/bin:$PATH"
+    GRADLE_PATH_VERSION=$(cd buildsystem/gradle_version; gradle -q 2>/dev/null | grep gradle_version= | cut -b 16-)
+    if [ "$GRADLE_PATH_VERSION" != "$GRADLE_VERSION" ]; then
+        diagnostic "gradle could not be found in PATH, downloading"
+        wget ${GRADLE_URL} -O ${GRADLE_DOWNLOADED_ZIP}  2>/dev/null || curl -LO ${GRADLE_URL} || fail "gradle: download failed"
+        echo $GRADLE_SHA256 ${GRADLE_DOWNLOADED_ZIP} | sha256sum -c || fail "gradle: hash mismatch"
 
-    ./gradle-${GRADLE_VERSION}/bin/gradle wrapper || fail "gradle: wrapper failed"
+        unzip -o ${GRADLE_DOWNLOADED_ZIP} || fail "gradle: unzip failed"
+        rm -rf ${GRADLE_DOWNLOADED_ZIP}
+    fi
 
-    ./gradlew -version || fail "gradle: wrapper failed"
+    gradle wrapper ${gradle_prop} || fail "gradle: wrapper failed"
+
     chmod a+x gradlew
-    rm -rf gradle-${GRADLE_VERSION}-bin.zip
 fi
+./gradlew -version || fail "gradle: wrapper failed"
 
 ####################
 # Fetch VLC source #
@@ -279,9 +301,11 @@ fi
 
 
 if [ "$FORCE_VLC_4" = 1 ]; then
-    LIBVLCJNI_TESTED_HASH=306c523bfadfca021fc0758317f3f7f187f1052b
+    LIBVLCJNI_TESTED_HASH=a1c3a2f1507396a3e030e5e3211b8a6618232369
+    LIBVLCJNI_BRANCH="master"
 else
-    LIBVLCJNI_TESTED_HASH=28b690d499711e7362eb61d03855e06e2854f396
+    LIBVLCJNI_TESTED_HASH=755eea54c2a0d282bbb88d3d448efbadea9a8340
+    LIBVLCJNI_BRANCH="libvlcjni-3.x"
 fi
 LIBVLCJNI_REPOSITORY=https://code.videolan.org/videolan/libvlcjni.git
 
@@ -289,19 +313,14 @@ LIBVLCJNI_REPOSITORY=https://code.videolan.org/videolan/libvlcjni.git
 
 if [ ! -d "$VLC_LIBJNI_PATH" ] || [ ! -d "$VLC_LIBJNI_PATH/.git" ]; then
     diagnostic "libvlcjni sources: not found, cloning"
-    if [ "$FORCE_VLC_4" = 1 ]; then
-        branch="master"
-    else
-        branch="libvlcjni-3.x"
-    fi
     if [ ! -d "$VLC_LIBJNI_PATH" ]; then
-        git clone --single-branch --branch ${branch} "${LIBVLCJNI_REPOSITORY}"
+        git clone --single-branch --branch ${LIBVLCJNI_BRANCH} "${LIBVLCJNI_REPOSITORY}"
         cd libvlcjni
     else # folder exist with only the artifacts
         cd libvlcjni
         git init
         git remote add origin "${LIBVLCJNI_REPOSITORY}"
-        git pull origin ${branch}
+        git pull origin ${LIBVLCJNI_BRANCH}
     fi
     git reset --hard ${LIBVLCJNI_TESTED_HASH} || fail "libvlcjni sources: LIBVLCJNI_TESTED_HASH ${LIBVLCJNI_TESTED_HASH} not found"
     init_local_props local.properties || { echo "Error initializing local.properties"; exit $?; }
@@ -332,8 +351,12 @@ fi
 ############
 diagnostic "Configuring"
 
+if [ "$AVLC_STATIC_CXX" = 1 ]; then
+    CONFIG_ARGS="$CONFIG_ARGS --static-cpp"
+fi
+
 # Build LibVLC if asked for it, or needed by medialibrary
-OUT_DBG_DIR=.dbg/${ANDROID_ABI}
+OUT_DBG_DIR="$(pwd -P)/.dbg/${ANDROID_ABI}"
 mkdir -p $OUT_DBG_DIR
 
 if [ "$BUILD_MEDIALIB" != 1 ] || [ ! -d "${VLC_LIBJNI_PATH}/libvlc/jni/libs/" ]; then
@@ -346,14 +369,21 @@ if [ "$BUILD_MEDIALIB" != 1 ] || [ ! -d "${VLC_LIBJNI_PATH}/libvlc/jni/libs/" ];
         fi
         if ${VLC_LIBJNI_PATH}/vlc/extras/ci/check-url.sh "$VLC_PREBUILT_CONTRIBS_URL"; then CONTRIB_FLAGS="--with-prebuilt-contribs"; fi
     fi
-    ${VLC_LIBJNI_PATH}/buildsystem/compile-libvlc.sh -a ${ARCH} ${CONTRIB_FLAGS}
+    ${VLC_LIBJNI_PATH}/buildsystem/compile-libvlc.sh -a ${ARCH} ${CONTRIB_FLAGS} ${CONFIG_ARGS} --license $AVLC_CONTRIB_LICENSE
 
-    cp -a ${VLC_LIBJNI_PATH}/libvlc/jni/obj/local/${ANDROID_ABI}/*.so ${OUT_DBG_DIR}
+    cp -a ${VLC_LIBJNI_PATH}/libvlc/jni/obj/local/${ANDROID_ABI}/*.so "${OUT_DBG_DIR}"
 fi
 
 if [ "$NO_ML" != 1 ]; then
-    ANDROID_ABI=$ANDROID_ABI RELEASE=$RELEASE RESET=$RESET buildsystem/compile-medialibrary.sh
-    cp -a medialibrary/jni/obj/local/${ANDROID_ABI}/*.so ${OUT_DBG_DIR}
+    medialig_args="-a $ANDROID_ABI $CONFIG_ARGS"
+    if [ "$RELEASE" = 1 ]; then
+        medialig_args="$medialig_args --release"
+    fi
+    if [ "$RESET" = 1 ]; then
+        medialig_args="$medialig_args --reset"
+    fi
+    buildsystem/compile-medialibrary.sh ${medialig_args}
+    cp -a medialibrary/jni/obj/local/${ANDROID_ABI}/*.so "${OUT_DBG_DIR}"
 fi
 
 ##################
@@ -364,8 +394,6 @@ if [ "$TEST" = 1 ]; then
     BUILDTYPE="Debug"
 elif [ "$SIGNED_RELEASE" = 1 ]; then
     BUILDTYPE="signedRelease"
-elif [ "$NO_TV" = 1 ]; then
-    BUILDTYPE="NoTv"
 elif [ "$RELEASE" = 1 ]; then
     BUILDTYPE="Release"
 fi
@@ -376,9 +404,6 @@ else
 fi
 GRADLE_TASK="${ACTION}${BUILDTYPE}"
 
-if [ "$FORCE_VLC_4" = 1 ]; then
-    gradle_prop="-PforceVlc4=true"
-fi
 if [ -n "$M2_REPO" ]; then
     gradle_prop="$gradle_prop -Dmaven.repo.local=$M2_REPO"
 fi
@@ -403,7 +428,7 @@ else
     fi
 fi
 
-if [ ! -d "./remoteaccess/dist" ] ; then
+if [ ! -d "./application/remote-access-client/remoteaccess/dist" ] ; then
     echo "\033[1;32mWARNING: This was built without the remote access at ./remoteaccess/dist ..."
 fi
 

@@ -51,6 +51,10 @@ const val EXTRA_MRL = "sub_mrl"
 
 class FilePickerFragment : FileBrowserFragment(), BrowserContainer<MediaLibraryItem> {
 
+    override var inCards: Boolean
+        get() = false
+        set(value) {}
+
     override fun createFragment(): Fragment {
         return FilePickerFragment()
     }
@@ -62,14 +66,14 @@ class FilePickerFragment : FileBrowserFragment(), BrowserContainer<MediaLibraryI
             }
         }
         requireActivity().intent?.getIntExtra(KEY_PICKER_TYPE, 0)?.let { pickerIndex ->
-            pickerType = PickerType.values()[pickerIndex]
+            pickerType = PickerType.entries.toTypedArray()[pickerIndex]
         } ?: PickerType.SUBTITLE
         super.onCreate(savedInstanceState)
         adapter = FilePickerAdapter(this)
     }
 
     override fun setupBrowser() {
-        viewModel = ViewModelProvider(this, BrowserModel.Factory(requireContext(), mrl, TYPE_PICKER, false, pickerType = pickerType)).get(BrowserModel::class.java)
+        viewModel = ViewModelProvider(this, BrowserModel.Factory(requireContext(), mrl, TYPE_PICKER, false, pickerType = pickerType))[BrowserModel::class.java]
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -135,7 +139,7 @@ class FilePickerFragment : FileBrowserFragment(), BrowserContainer<MediaLibraryI
             for (directory in rootDirectories) if (path.startsWith(directory)) return false
             return true
         } else length < 7
-    } ?: true
+    } != false
 
     override fun containerActivity() = requireActivity()
 

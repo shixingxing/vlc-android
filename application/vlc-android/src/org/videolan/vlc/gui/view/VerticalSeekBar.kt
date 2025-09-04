@@ -31,7 +31,7 @@ import android.view.MotionEvent
 import com.google.android.material.slider.Slider
 
 class VerticalSeekBar : Slider {
-    private var listener: Slider.OnSliderTouchListener? = null
+    private var listener: OnSliderTouchListener? = null
     var fromUser = false
 
     constructor(context: Context) : super(context) {
@@ -96,7 +96,7 @@ class VerticalSeekBar : Slider {
                 } else if (currentProgress < 0) {
                     currentProgress = 0F
                 }
-                setValue(currentProgress)
+                value = currentProgress
 
                 return true
             }

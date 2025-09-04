@@ -10,6 +10,7 @@ import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
+import org.videolan.BuildConfig
 import org.videolan.libvlc.MediaPlayer
 import org.videolan.libvlc.RendererItem
 import org.videolan.libvlc.interfaces.IMedia
@@ -18,10 +19,12 @@ import org.videolan.libvlc.interfaces.IVLCVout
 import org.videolan.medialibrary.interfaces.media.MediaWrapper
 import org.videolan.resources.VLCInstance
 import org.videolan.resources.VLCOptions
+import org.videolan.tools.KEY_EQUALIZER_ENABLED
 import org.videolan.tools.*
 import org.videolan.vlc.*
 import org.videolan.vlc.gui.dialogs.VideoTracksDialog
 import org.videolan.vlc.gui.dialogs.adapters.VlcTrack
+import org.videolan.vlc.repository.EqualizerRepository
 import org.videolan.vlc.repository.SlaveRepository
 import kotlin.math.absoluteValue
 
@@ -81,7 +84,10 @@ class PlayerController(val context: Context) : IVLCVout.Callback, MediaPlayer.Ev
         withContext(Dispatchers.IO) { if (!mediaplayer.isReleased) mediaplayer.media = media.apply { if (hasRenderer) parse() } }
         mediaplayer.setEventListener(this@PlayerController)
         if (!mediaplayer.isReleased) {
-            mediaplayer.setEqualizer(VLCOptions.getEqualizerSetFromSettings(context))
+            if (Settings.getInstance(context).getBoolean(KEY_EQUALIZER_ENABLED, false)) withContext(Dispatchers.IO) {
+                val repository = EqualizerRepository.getInstance(context)
+                mediaplayer.setEqualizer(repository.getCurrentEqualizer(context).getEqualizer())
+            }
             mediaplayer.setVideoTitleDisplay(MediaPlayer.Position.Disable, 0)
             mediaplayer.play()
         }

@@ -68,7 +68,17 @@
     <string name="set_song_question">להגדיר את ‚%1$s’ כצלצול?</string>
     <string name="info">מידע</string>
     <string name="confirm_delete">למחוק את הקובץ „%1$s“?</string>
+    <string name="equalizer_overwrite_warning">האקוולייזר הזה כבר קיים</string>
+    <string name="overwrite">שכתוב</string>
+    <string name="eq_cannot_overwrite">לא ניתן לשכתב על אקוולייזר ברירת המחדל</string>
+    <string name="equalizer_name">שם האקוולייזר</string>
+    <string name="equalizer_deleted">האקוולייזר נמחק</string>
+    <string name="equalizer_leave_warning">יוביל ליציאה מנגן הווידאו</string>
+    <string name="invalid_equalizer_file">קובץ אקוולייזר שגוי</string>
+    <string name="confirm_delete_eq">למחוק את הערכה הזאת?</string>
+    <string name="confirm_delete_vlc_eq">להסתיר את הערכה הזאת?\nאפשר לשחזור אותה בהגדרות האקוולייזרים.</string>
     <string name="confirm_replace_playlist">להחליף את רשימת הנגינה ‚%1$s’?</string>
+    <string name="invalid_settings_file">קובץ הגדרות שגוי</string>
     <string name="confirm_delete_message">מדובר בשינוי קבוע ולא ניתן לבטל אותו.</string>
     <string name="confirm_delete_album">למחוק את האלבום ‚%1$s’?</string>
     <string name="confirm_delete_several_media">למחוק את %1$d פריטי המדיה האלו?</string>
@@ -145,6 +155,14 @@
     <string name="video">וידאו</string>
     <string name="bookmarks">סימניות</string>
     <string name="equalizer">אקולייזר</string>
+    <string name="import_equalizer">ייבוא אקוולייזר</string>
+    <string name="equalizer_exported">האקוולייזר/ים יוצאו אל %s</string>
+    <string name="equalizer_copy_template">(עותק%s)</string>
+    <string name="new_equalizer_copy_template">אקוולייזר חדש%s</string>
+    <string name="show_all">להציג הכול</string>
+    <string name="hide_all">להסתיר הכול</string>
+    <string name="export_all">לייצא הכול</string>
+    <string name="import_all">לייבא הכול</string>
     <string name="all_albums">כל האלבומים</string>
     <string name="genres">סגנונות</string>
     <string name="playlists">רשימות השמעה</string>
@@ -252,8 +270,6 @@
 
     <string name="streams">תזרימים</string>
     <string name="open_mrl_dialog_msg">להזין כתובת הרשת: למשל http://‎,‏ mms://‎ או rtsp://‎</string>
-    <string name="encountered_error_title">שגיאת נגינה</string>
-    <string name="encountered_error_message">התכנית VLC גילתה שגיאה עם המדיה הזאת.\nנא לנסות לרענן את ספריית המדיה.</string>
     <string name="invalid_location">לא ניתן לנגן את המיקום %1$s.</string>
     <string name="missing_location">פריט המדיה הזה מגיע מאמצעי אחסון שאינו זמין עוד ולא ניתן לנגן אותו.</string>
 
@@ -336,6 +352,9 @@
     <string name="add_custom_path_description">נא להזין תיקיית מותאמת אישית נוספת לסריקה:</string>
     <string name="remove_custom_path">להסיר נתיב מותאם אישית</string>
     <string name="group_ban_folder">חסימת תיקייה מספריית מדיה.</string>
+    <string name="ban_folder">חסימת תיקייה</string>
+    <string name="ban_folder_explanation">חסימת התיקייה הזאת תוביל לכך שהמדיה שבה לא תופיע בסעיפי הווידאו או השמע ביישומון, למרות שהם עדיין יהיו נגישים מהדפדפן.\nכדי לבטל את החסימה, יש לגשת להגדרות, %s וללחוץ על התיקייה הזאת ארוכות.</string>
+
     <string name="hardware_acceleration">האצת חומרה</string>
     <string name="hardware_acceleration_summary">מושבת: יציב יותר\nפענוח: עשוי לשפר ביצועים\nמלא: עשוי לשפר ביצועים אף יותר</string>
     <string name="hardware_acceleration_disabled">מושבת</string>
@@ -639,6 +658,8 @@
     <string name="network_shares_discovery">מתבצע איתור שיתופי רשת</string>
     <string name="network_empty">התיקייה ריקה.</string>
     <string name="network_connection_needed">אין קישור לרשת המקומית.</string>
+    <string name="network_disabled">עיון ברשת מושבת</string>
+    <string name="browse_network">עיון ברשת</string>
     <string name="search_hint">חיפוש במדיה</string>
     <string name="search_in_list_hint">חיפוש ברשימה הנוכחית</string>
     <string name="search_global">חיפוש בכל ספריית המדיה</string>
@@ -659,10 +680,7 @@
 
     <!--What's new-->
     <string name="whats_new_title">מה חדש ב־VLC ל־Android %s</string>
-    <string name="whats_new_36_webserver_text">עם יכולת החדשה לגישה מרחוק, אפשר לשלוט ב־VLC ל־Android מכל מכשיר אחר.\nלשלוח את המדיה שלך בשני הכיוונים, לשלוט בנגינה ועוד המון יכולות חיוניות!</string>
-    <string name="whats_new_36_favorites_text">אפשר לסמן את המדיה, האומנים והאלבומים שלך כמועדפים.\nלאתר את התוכן המועדף עליך במבט חטוף על ידי סינון התוכן לפי מועדפים בלבד!</string>
-
-<!--    update-->
+    <!--    update-->
     <string name="update_title">עדכון זמין</string>
     <string name="install_nightly_title">התקנת המהדורה שנבנתה בלילה</string>
     <string name="update_text">מהדורה לילית של VLC ל־Android זמינה!\n\nהסיבה שזה מופיע היא כי הגרסה שלך היא מהדורה לילית.</string>
@@ -903,7 +921,6 @@
     <string name="eq_snap_bands">הצמדת ערוצים</string>
     <string name="enable_equalizer">הפעלה</string>
     <string name="preamp">הגברת קדם</string>
-    <string name="presets">ערכות מוגדרות</string>
     <string name="reset">איפוס</string>
     <plurals name="tracks_inserted">
         <item quantity="one">רצועה %d נוספת</item>
@@ -1120,7 +1137,7 @@
     <string name="bookmarks_title">סימניות</string>
     <string name="no_bookmark">לא הוגדרו סימניות</string>
     <string name="bookmark_default_name">סימון במיקום %s</string>
-    <string name="bookmark_name">לסמן את %s</string>
+    <string name="bookmark_name">סימנייה %s</string>
     <string name="add_bookmark">הוספת סימניה</string>
     <string name="bookmark_added">נוספה סימנייה</string>
     <string name="previous_bookmark">הסימנייה הקודמת</string>
@@ -1139,6 +1156,11 @@
     <string name="move_down">להוריד למטה</string>
     <string name="remove_from_playlist">הסרה מרשימת הנגינה</string>
     <string name="play_media">לנגן את %s</string>
+    <string name="edit_eq_preset">עריכת ערכת אקוולייזרים</string>
+    <string name="edit_eq_name_not_allowed">השם הזה אסור לשימוש</string>
+    <string name="export_equalizer">ייצוא אקוולייזר</string>
+    <string name="hide_equalizer">הסתרת אקוולייזר</string>
+    <string name="show_equalizer">הצגת אקוולייזר</string>
 
     <!-- Duplication Warning Dialog -->
     <string name="message_primary_default">להוסיף פריטים כפולים?</string>
@@ -1306,6 +1328,7 @@
     <string name="ra_prepare_download">ההורדה שלך בהכנה</string>
     <string name="ra_forbidden">התוכן הושבת בהגדרות</string>
     <string name="ra_playback_forbidden">בקרת נגינה מושבתת בהגדרות</string>
+    <string name="ra_logs_forbidden">שיתוף יומנים מושבת בהגדרות</string>
     <string name="ra_code_requested_explanation">כדי להגן על השרת שלך, הגישה מוגנת.\nנא למלא את הקוד שמופיע בהתראות שלך</string>
     <string name="ra_ssl_explanation_title">חיבור לא מאובטח</string>
     <string name="ra_ssl_explanation">החיבור שלך לא מאובטח.</string>
@@ -1367,6 +1390,7 @@
     <string name="export_settings">ייצוא הגדרות</string>
     <string name="restore_settings_summary">שחזור ההגדרות שלך מייצוא קודם</string>
     <string name="restore_settings">שחזור הגדרות</string>
+    <string name="obsolete_restore_settings">ההגדרות שלך שיוצאו מיושנות. נא לייצא אותן שוב</string>
     <string name="export_settings_success">ההגדרות יוצאו בהצלחה לשורש האחסון הפנימי</string>
     <string name="export_settings_failure">משהו השתבש בעת ייצוא ההגדרות שלך</string>
 
@@ -1396,4 +1420,13 @@
     <string name="generating_logs">היומנים נוצרים. נא להמתין.</string>
     <string name="default_playback_action">פעולת נגינה</string>
     <string name="files">קבצים</string>
+    <string name="remote_access_feedback_generate">יצירת דוח</string>
+    <string name="remote_access_feedback_generated">דוח המשוב שלך נוצר</string>
+    <string name="remote_access_feedback_generated_explanation">יש לגעת בכפתור להלן כדי לשלוח אותו באמצעות לקוח הדוא״ל שלך כברירת מחדל. אם נתקלת בתקלות כלשהן ניתן להעתיק ולהדביק את השדות שלהלן ולשלוח את הודעת הדוא״ל בעצמך.</string>
+    <string name="remote_access_feedback_file_explanation">הרגע הורדת את הקובץ הנחוץ. נא לזכור לצרף אותו להודעת הדוא״ל שלך.</string>
+    <string name="generic_copied_to_clipboard">הועתק ללוח הגזירים</string>
+    <string name="feedback_email_warning">לא מותקן לקוח דוא״ל</string>
+    <string name="feedback_email_warning_explanation">הדרך הקלה ביותר לשתף את המשוב שלך היא להשתמש ביכולת %1$s.\nכדי לעשות זאת, יש להפעיל את הגישה מרחוק בהגדרות, לעקוב אחר ההנחיות ולבחור ברשומה %2$s בתפריט.</string>
+    <string name="feedback_email_warning_remote_action">פתיחת ההגדרות</string>
+    <string name="feedback_email_warning_try_anyway">לנסות בכל זאת</string>
     </resources>

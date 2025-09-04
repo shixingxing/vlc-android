@@ -8,21 +8,32 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
-import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.edit
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.videolan.resources.ACTIVITY_RESULT_PREFERENCES
+import org.videolan.resources.AndroidDevices
 import org.videolan.resources.EXTRA_FIRST_RUN
 import org.videolan.resources.EXTRA_UPGRADE
 import org.videolan.resources.PREF_FIRST_RUN
 import org.videolan.resources.util.startMedialibrary
-import org.videolan.tools.*
+import org.videolan.tools.KEY_APP_THEME
+import org.videolan.tools.KEY_FRAGMENT_ID
+import org.videolan.tools.KEY_MEDIALIBRARY_SCAN
+import org.videolan.tools.ML_SCAN_OFF
+import org.videolan.tools.ML_SCAN_ON
+import org.videolan.tools.NOTIFICATION_PERMISSION_ASKED
+import org.videolan.tools.RESULT_RESTART
+import org.videolan.tools.Settings
 import org.videolan.vlc.BuildConfig
 import org.videolan.vlc.MediaParsingService
 import org.videolan.vlc.R
@@ -38,9 +49,25 @@ class OnboardingActivity : AppCompatActivity(), OnboardingFragmentListener {
     private lateinit var nextButton: Button
     private val viewModel: OnboardingViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
+        if (AndroidDevices.canUseSystemNightMode()) enableEdgeToEdge()
+        WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightNavigationBars = false
+        WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = false
         super.onCreate(savedInstanceState)
 //        viewModel.permissionGranted = Permissions.canReadStorage(applicationContext)
         setContentView(R.layout.activity_onboarding)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.container)) { v, windowInsets ->
+            val bars = windowInsets.getInsets(
+                WindowInsetsCompat.Type.systemBars()
+                        or WindowInsetsCompat.Type.displayCutout()
+            )
+            v.updatePadding(
+                left = bars.left,
+                top = bars.top,
+                right = bars.right,
+                bottom = bars.bottom,
+            )
+            WindowInsetsCompat.CONSUMED
+        }
         showFragment(viewModel.currentFragment)
     }
 
@@ -86,7 +113,7 @@ class OnboardingActivity : AppCompatActivity(), OnboardingFragmentListener {
             putInt(PREF_FIRST_RUN, BuildConfig.VLC_VERSION_CODE)
             putBoolean(ONBOARDING_DONE_KEY, true)
             putInt(KEY_MEDIALIBRARY_SCAN, if (viewModel.scanStorages) ML_SCAN_ON else ML_SCAN_OFF)
-            putInt("fragment_id", if (viewModel.scanStorages) R.id.nav_video else R.id.nav_directories)
+            putInt(KEY_FRAGMENT_ID, if (viewModel.scanStorages) R.id.nav_video else R.id.nav_directories)
             putString(KEY_APP_THEME, viewModel.theme.toString())
         }
         if (!viewModel.scanStorages) MediaParsingService.preselectedStorages.clear()
@@ -160,10 +187,6 @@ class OnboardingActivity : AppCompatActivity(), OnboardingFragmentListener {
             else ->  onDone()
         }
         if (viewModel.currentFragment == FragmentName.THEME) nextButton.text = getString(R.string.done)
-    }
-
-    fun manageNextVisibility(visible: Boolean) {
-        nextButton.visibility = if (visible) View.VISIBLE else View.GONE
     }
 
 }

@@ -36,6 +36,10 @@ import androidx.appcompat.view.ActionMode
 import androidx.appcompat.widget.SearchView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.lifecycleScope
@@ -120,18 +124,17 @@ import org.videolan.vlc.util.ContextOption.CTX_RENAME
 import org.videolan.vlc.util.ContextOption.CTX_SET_RINGTONE
 import org.videolan.vlc.util.ContextOption.CTX_SHARE
 import org.videolan.vlc.util.ContextOption.Companion.createCtxPlaylistItemFlags
-import org.videolan.vlc.util.FileUtils
 import org.videolan.vlc.util.Permissions
 import org.videolan.vlc.util.ThumbnailsProvider
 import org.videolan.vlc.util.getScreenWidth
 import org.videolan.vlc.util.isSchemeHttpOrHttps
 import org.videolan.vlc.util.launchWhenStarted
+import org.videolan.vlc.util.setLayoutMarginTop
 import org.videolan.vlc.util.share
 import org.videolan.vlc.viewmodels.PlaylistModel
 import org.videolan.vlc.viewmodels.mobile.PlaylistViewModel
 import org.videolan.vlc.viewmodels.mobile.getViewModel
 import java.security.SecureRandom
-import java.util.LinkedList
 import kotlin.math.min
 
 open class HeaderMediaListActivity : AudioPlayerContainerActivity(), IEventsHandler<MediaLibraryItem>, IListEventsHandler, ActionMode.Callback, View.OnClickListener, CtxActionReceiver, Filterable, SearchView.OnQueryTextListener, MenuItem.OnActionExpandListener {
@@ -147,11 +150,28 @@ open class HeaderMediaListActivity : AudioPlayerContainerActivity(), IEventsHand
     private lateinit var viewModel: PlaylistViewModel
     private var itemTouchHelper: ItemTouchHelper? = null
     override fun isTransparent() = true
+    override var isEdgeToEdge = false
 
     public override fun onCreate(savedInstanceState: Bundle?) {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = false
         super.onCreate(savedInstanceState)
 
         binding = DataBindingUtil.setContentView(this, R.layout.header_media_list_activity)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById<View>(android.R.id.content)) { v, windowInsets ->
+            val bars = windowInsets.getInsets(
+                WindowInsetsCompat.Type.systemBars()
+                        or WindowInsetsCompat.Type.displayCutout()
+            )
+            v.updatePadding(
+                left = bars.left,
+                right = bars.right,
+                bottom = bars.bottom,
+            )
+
+            setLayoutMarginTop(binding.mainToolbar, bars.top)
+            WindowInsetsCompat.CONSUMED
+        }
 
         initAudioPlayerContainerActivity()
         fragmentContainer = binding.songs
@@ -611,24 +631,11 @@ open class HeaderMediaListActivity : AudioPlayerContainerActivity(), IEventsHand
         dialog.show(supportFragmentManager, ConfirmDeleteDialog::class.simpleName)
     }
 
-    private fun deleteMedia(mw: MediaLibraryItem) = lifecycleScope.launch(Dispatchers.IO) {
-        val foldersToReload = LinkedList<String>()
-        for (media in mw.tracks) {
-            val path = media.uri.path
-            val parentPath = FileUtils.getParent(path)
-            if (parentPath != null && FileUtils.deleteFile(path) && media.id > 0L && !foldersToReload.contains(parentPath)) {
-                foldersToReload.add(parentPath)
-            } else
-                UiTools.snacker(this@HeaderMediaListActivity, getString(R.string.msg_delete_failed, media.title))
-        }
-        for (folder in foldersToReload) mediaLibrary.reload(folder)
-    }
-
     override fun onClick(v: View) {
         MediaUtils.playTracks(this, viewModel.tracksProvider, 0)
     }
 
-    private suspend fun removeFromPlaylist(list: List<MediaWrapper>, indexes: List<Int>) {
+    private fun removeFromPlaylist(list: List<MediaWrapper>, indexes: List<Int>) {
         if (!showPinIfNeeded()) {
             val itemsRemoved = HashMap<Int, Long>()
             val playlist = viewModel.playlist as? Playlist

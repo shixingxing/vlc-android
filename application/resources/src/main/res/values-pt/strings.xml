@@ -67,7 +67,17 @@
     <string name="set_song_question">Definir \'%1$s\' como toque de chamada?</string>
     <string name="info">Informação</string>
     <string name="confirm_delete">Eliminar o ficheiro \'%1$s\'?</string>
+    <string name="equalizer_overwrite_warning">Este equalizador já existe</string>
+    <string name="overwrite">Substituir</string>
+    <string name="eq_cannot_overwrite">Não é possível substituir um equalizador predefinido</string>
+    <string name="equalizer_name">Nome do equalizador</string>
+    <string name="equalizer_deleted">O equalizador foi eliminado</string>
+    <string name="equalizer_leave_warning">Vai sair do reprodutor de vídeo</string>
+    <string name="invalid_equalizer_file">Ficheiro de equalizador inválido</string>
+    <string name="confirm_delete_eq">Tem a certeza de que pretende eliminar esta predefinição?</string>
+    <string name="confirm_delete_vlc_eq">Tem a certeza de que pretende ocultar esta predefinição?\nPode restaurá-la nas definições do equalizador.</string>
     <string name="confirm_replace_playlist">Tem a certeza que pretende substituir a lista de reprodução \'%1$s\'?</string>
+    <string name="invalid_settings_file">Ficheiro de definições inválido</string>
     <string name="confirm_delete_message">Isto é permanente e não pode ser anulado.</string>
     <string name="confirm_delete_album">Eliminar o álbum \'%1$s\'?</string>
     <string name="confirm_delete_several_media">Eliminar estes %1$d ficheiros?</string>
@@ -141,6 +151,14 @@
     <string name="video">Vídeo</string>
     <string name="bookmarks">Marcadores</string>
     <string name="equalizer">Equalizador</string>
+    <string name="import_equalizer">Importar equalizador</string>
+    <string name="equalizer_exported">Equalizador(es) exportado(s) para %s</string>
+    <string name="equalizer_copy_template">(copiar%s)</string>
+    <string name="new_equalizer_copy_template">Novo equalizador%s</string>
+    <string name="show_all">Mostrar tudo</string>
+    <string name="hide_all">Ocultar tudo</string>
+    <string name="export_all">Exportar tudo</string>
+    <string name="import_all">Importar tudo</string>
     <string name="all_albums">Todos os álbuns</string>
     <string name="genres">Géneros</string>
     <string name="playlists">Listas de reprodução</string>
@@ -247,8 +265,6 @@
 
     <string name="streams">Transmissões</string>
     <string name="open_mrl_dialog_msg">Insira o endereço de rede: por exemplo, http://, mms:// ou rtsp://</string>
-    <string name="encountered_error_title">Erro de reprodução</string>
-    <string name="encountered_error_message">O VLC encontrou um erro com esta média.\nPor favor, tente atualizar a mediateca.</string>
     <string name="invalid_location">A localização %1$s não pode ser reproduzida.</string>
     <string name="missing_location">Este ficheiro está num armazenamento indisponível e por isso não pode ser reproduzido.</string>
 
@@ -331,6 +347,9 @@
     <string name="add_custom_path_description">Insira uma pasta personalizada adicional para pesquisar:</string>
     <string name="remove_custom_path">Remover caminho personalizado</string>
     <string name="group_ban_folder">Banir pasta da mediateca</string>
+    <string name="ban_folder">Banir pasta</string>
+    <string name="ban_folder_explanation">Banir esta pasta significa que não verá os seus conteúdos de multimédia na secção de vídeo ou áudio da aplicação, embora estes continuem acessíveis a partir do navegador.\nPara remover o bane, aceda às definições, %s e toque prolongado nesta pasta.</string>
+
     <string name="hardware_acceleration">Aceleração por Hardware</string>
     <string name="hardware_acceleration_summary">Desativado: maior estabilidade\nDescodificação: pode aumentar o desempenho\nTotal: pode aumentar ainda mais o desempenho</string>
     <string name="hardware_acceleration_disabled">Desativada</string>
@@ -373,11 +392,11 @@
     <string name="video_transition_title">Transição de vídeos </string>
     <string name="video_transition_summary">Mostrar o titulo do novo vídeo na transição </string>
     <string name="media_seen">Mostrar marcador de vídeo visto</string>
-    <string name="media_seen_summary">Marcar vídeo como visto se reproduzido até ao final</string>
+    <string name="media_seen_summary">Marcar vídeo como visto se reproduzido até ao fim</string>
     <string name="force_play_all_summary">Reproduzir todos os vídeos, iniciando com o que for clicado</string>
     <string name="force_play_all_audio_summary">Reproduzir todos os áudios, começando no que for clicado</string>
-    <string name="force_play_all_title">Modo de lista de reprodução de vídeo</string>
-    <string name="force_play_all_audio_title">Modo de lista de reprodução de áudio</string>
+    <string name="force_play_all_title">Modo da lista de reprodução de vídeo</string>
+    <string name="force_play_all_audio_title">Modo da lista de reprodução de áudio</string>
     <string name="save_brightness_summary">Manter o nível de brilho entre multimédia</string>
     <string name="save_brightness_title">Guardar nível de brilho</string>
     <string name="save_audiodelay_summary">Guardar atraso de áudio de cada vídeo individualmente</string>
@@ -632,8 +651,10 @@
     <string name="audio_delay">Atraso de áudio</string>
     <string name="spu_delay">Atraso de legendas</string>
     <string name="network_shares_discovery">A procurar por partilhas de rede</string>
-    <string name="network_empty">Esta pasta está vazia.</string>
+    <string name="network_empty">Este diretório está vazio.</string>
     <string name="network_connection_needed">Sem ligação à rede local</string>
+    <string name="network_disabled">Navegação em rede desativada</string>
+    <string name="browse_network">Navegar na rede</string>
     <string name="search_hint">Pesquisa multimédia</string>
     <string name="search_in_list_hint">Procurar na lista atual</string>
     <string name="search_global">Pesquisar em toda a mediateca</string>
@@ -654,14 +675,11 @@
 
     <!--What's new-->
     <string name="whats_new_title">O que há de novo no VLC para Android %s</string>
-    <string name="whats_new_36_webserver_text">Com a nova funcionalidade de acesso remoto, controle o VLC para Android a partir de qualquer outro dispositivo.\nEnvie os seus conteúdos multimédia para ambos os lados, controle a sua reprodução e muito mais!</string>
-    <string name="whats_new_36_favorites_text">Agora pode adicionar os seus conteúdos multimédia, listas de reprodução, artistas ou álbuns aos favoritos.\nEncontre rapidamente os seus conteúdos preferidos filtrando-os apenas pelos favoritos!</string>
-
-<!--    update-->
+    <!--    update-->
     <string name="update_title">Atualização disponível</string>
     <string name="install_nightly_title">Instalar a versão nightly</string>
     <string name="update_text">Uma nova versão nightly do VLC para Android está disponível!\n\nEstá a ver isto porque está a utilizar uma versão nightly.</string>
-    <string name="install_text">As versões nightly são atualizadas automaticamente todos os dias com as mais recentes funcionalidades e correções.\n\nDescarregar agora?</string>
+    <string name="install_text">As versões Nightly são atualizadas automaticamente todos os dias com as funcionalidades mais recentes e correções.\n\nTransferir agora?</string>
 
     <string name="open_in_browser">Abrir no navegador</string>
     <string name="install">Instalar</string>
@@ -677,7 +695,7 @@
     <string name="more_actions">Mais ações</string>
     <string name="back_quit_lock">Prima novamente em \'voltar\' para sair do vídeo</string>
     <string name="stream_deleted">Transmissão eliminada</string>
-    <string name="no_subs_found">Não existem legendas nesta pasta</string>
+    <string name="no_subs_found">Não existem legendas neste diretório</string>
     <string name="music_now_playing">A reproduzir</string>
 
     <!-- Widget -->
@@ -898,7 +916,6 @@
     <string name="eq_snap_bands">Atrair bandas</string>
     <string name="enable_equalizer">Ativar</string>
     <string name="preamp">Pré-amplificação</string>
-    <string name="presets">Predefinições</string>
     <string name="reset">Repor</string>
     <plurals name="tracks_inserted">
         <item quantity="one">%d faixa inserida</item>
@@ -1134,6 +1151,11 @@
     <string name="move_down">Descer</string>
     <string name="remove_from_playlist">Remover da lista de reprodução</string>
     <string name="play_media">Reproduzir %s</string>
+    <string name="edit_eq_preset">Editar equalizador predefinido</string>
+    <string name="edit_eq_name_not_allowed">Este nome não é permitido</string>
+    <string name="export_equalizer">Exportar equalizador</string>
+    <string name="hide_equalizer">Ocultar equalizador</string>
+    <string name="show_equalizer">Mostrar equalizador</string>
 
     <!-- Duplication Warning Dialog -->
     <string name="message_primary_default">Adicionar itens duplicados?</string>
@@ -1296,9 +1318,10 @@
     <string name="ra_upload_remaining">A enviar %s ficheiros</string>
     <string name="ra_upload_all">Enviar tudo</string>
     <string name="ra_drop_files_tip">Largue ficheiros em qualquer lugar para os enviar para o seu dispositivo</string>
-    <string name="ra_prepare_download">A preparar a descarga</string>
+    <string name="ra_prepare_download">A preparar a sua transferência</string>
     <string name="ra_forbidden">Conteúdo desativado nas definições</string>
     <string name="ra_playback_forbidden">Controlo de reprodução desativado nas definições</string>
+    <string name="ra_logs_forbidden">Partilha de registos desativada nas definições</string>
     <string name="ra_code_requested_explanation">Para proteger o seu servidor, o acesso é protegido.\nPor favor, introduza o código apresentado nas suas notificações</string>
     <string name="ra_ssl_explanation_title">Conexão insegura</string>
     <string name="ra_ssl_explanation">A sua conexão não é segura.</string>
@@ -1360,6 +1383,7 @@
     <string name="export_settings">Exportar definições</string>
     <string name="restore_settings_summary">Restaurar as suas definições de uma exportação anterior</string>
     <string name="restore_settings">Restaurar definições</string>
+    <string name="obsolete_restore_settings">A sua exportação de definições está desatualizada. Exporte-as novamente.</string>
     <string name="export_settings_success">Definições exportadas com êxito para a raiz do armazenamento interno</string>
     <string name="export_settings_failure">Algo correu mal ao exportar as suas definições</string>
 
@@ -1389,4 +1413,13 @@
     <string name="generating_logs">A gerar registos. Aguarde.</string>
     <string name="default_playback_action">Ação de reprodução</string>
     <string name="files">Ficheiros</string>
+    <string name="remote_access_feedback_generate">Gerar relatório</string>
+    <string name="remote_access_feedback_generated">O seu relatório de feedback foi gerado</string>
+    <string name="remote_access_feedback_generated_explanation">Toque no botão abaixo para o enviar utilizando o seu cliente de correio eletrónico predefinido. Se tiver algum problema, pode copiar e colar os campos abaixo e enviar a mensagem de correio eletrónico.</string>
+    <string name="remote_access_feedback_file_explanation">Acabou de transferir o ficheiro necessário. Por favor, não se esqueça de o anexar à sua mensagem.</string>
+    <string name="generic_copied_to_clipboard">Copiado para a área de transferência</string>
+    <string name="feedback_email_warning">Nenhum cliente de correio eletrónico instalado</string>
+    <string name="feedback_email_warning_explanation">A forma mais fácil de partilhar os seus comentários é utilizar a funcionalidade %1$s. Para o fazer, ative o acesso remoto nas definições, siga as instruções e escolha a entrada no menu %2$s.</string>
+    <string name="feedback_email_warning_remote_action">Abrir as definições</string>
+    <string name="feedback_email_warning_try_anyway">Tentar na mesma</string>
     </resources>

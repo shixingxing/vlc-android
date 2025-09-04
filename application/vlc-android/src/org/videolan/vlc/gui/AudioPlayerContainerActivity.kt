@@ -70,10 +70,11 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.videolan.medialibrary.interfaces.Medialibrary
-import org.videolan.resources.KEY_CURRENT_AUDIO
 import org.videolan.resources.util.getFromMl
 import org.videolan.resources.util.startMedialibrary
 import org.videolan.tools.AUDIO_RESUME_PLAYBACK
+import org.videolan.tools.KEY_AUDIO_PLAYER_SHOW_COVER
+import org.videolan.tools.KEY_CURRENT_AUDIO
 import org.videolan.tools.PREF_AUDIOPLAYER_TIPS_SHOWN
 import org.videolan.tools.Settings
 import org.videolan.tools.dp
@@ -87,7 +88,7 @@ import org.videolan.vlc.VlcMigrationHelper
 import org.videolan.vlc.gui.audio.AudioPlayer
 import org.videolan.vlc.gui.audio.AudioPlaylistTipsDelegate
 import org.videolan.vlc.gui.audio.AudioTipsDelegate
-import org.videolan.vlc.gui.audio.EqualizerFragment
+import org.videolan.vlc.gui.dialogs.EqualizerFragmentDialog
 import org.videolan.vlc.gui.helpers.BottomNavigationBehavior
 import org.videolan.vlc.gui.helpers.KeycodeListener
 import org.videolan.vlc.gui.helpers.PlayerBehavior
@@ -118,6 +119,7 @@ private const val BOOKMARK_VISIBLE: String = "bookmark_visible"
 
 open class AudioPlayerContainerActivity : BaseActivity(), KeycodeListener, SchedulerCallback, PlayerOptionsDelegateCallback {
 
+    private lateinit var onBackPressedCallback: OnBackPressedCallback
     private var bottomBar: BottomNavigationView? = null
     lateinit var appBarLayout: AppBarLayout
     protected lateinit var toolbar: Toolbar
@@ -217,7 +219,6 @@ open class AudioPlayerContainerActivity : BaseActivity(), KeycodeListener, Sched
                     val bottomNavigationView = findViewById<BottomNavigationView?>(R.id.navigation)
                     bottomNavigationView?.setPadding(bottomNavigationView.paddingLeft, bottomNavigationView.paddingTop, bottomNavigationView.paddingRight, insets.bottom)
                     bottomInset = insets.bottom
-                    insetListener.invoke(insets)
                     if (::audioPlayer.isInitialized) audioPlayer.setBottomMargin()
                 }
                 setContentBottomPadding()
@@ -225,7 +226,7 @@ open class AudioPlayerContainerActivity : BaseActivity(), KeycodeListener, Sched
 
             WindowInsetsCompat.CONSUMED
         }
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+        onBackPressedCallback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (slideDownAudioPlayer()) return
                 if (supportFragmentManager.backStackEntryCount == 0)
@@ -234,7 +235,17 @@ open class AudioPlayerContainerActivity : BaseActivity(), KeycodeListener, Sched
                     supportFragmentManager.popBackStack()
                 }
             }
-        })
+        }
+
+        supportFragmentManager.addOnBackStackChangedListener {
+            manageBackstate()
+        }
+        onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
+        manageBackstate()
+    }
+
+    private fun manageBackstate() {
+        onBackPressedCallback.isEnabled = supportFragmentManager.backStackEntryCount > 0 || isAudioPlayerExpanded
     }
 
     /**
@@ -362,7 +373,7 @@ open class AudioPlayerContainerActivity : BaseActivity(), KeycodeListener, Sched
             // [AudioPlayer.showCover] applies a new [ConstraintSet]. It cannot be done in [AudioPlayer.onCreate] because it would compete with
             // [BottomSheetBehavior.onLayoutChild] and prevent any scroll event to be forwarded by the ConstraintLayout views (the bookmark list for example)
             // That why we wait that the layout has been done to perform this. See https://code.videolan.org/videolan/vlc-android/-/issues/2241#note_291050
-            audioPlayer.showCover(settings.getBoolean("audio_player_show_cover", false))
+            audioPlayer.showCover(settings.getBoolean(KEY_AUDIO_PLAYER_SHOW_COVER, false))
             if (playerBehavior.state == STATE_COLLAPSED) audioPlayer.onSlide(0f)
         }
         playerBehavior.addBottomSheetCallback(object : BottomSheetCallback() {
@@ -392,6 +403,7 @@ open class AudioPlayerContainerActivity : BaseActivity(), KeycodeListener, Sched
                         STATE_HIDDEN -> audioPlayerContainer.announceForAccessibility(getString(R.string.talkback_audio_player_closed))
                     }
                 }
+                manageBackstate()
                 updateToolbarScrollability(newState == STATE_COLLAPSED)
             }
         })
@@ -450,7 +462,7 @@ open class AudioPlayerContainerActivity : BaseActivity(), KeycodeListener, Sched
     }
 
     override fun showEqualizer() {
-        EqualizerFragment().show(supportFragmentManager, "equalizer")
+        EqualizerFragmentDialog().show(supportFragmentManager, "equalizer")
     }
 
     override fun increaseRate() {
@@ -480,8 +492,7 @@ open class AudioPlayerContainerActivity : BaseActivity(), KeycodeListener, Sched
 //    fun getAudioMargin() = if (playerShown) resources.getDimensionPixelSize(R.dimen.player_peek_height) else 0
 
     override fun onSaveInstanceState(outState: Bundle) {
-        outState.putBoolean(BOTTOM_IS_HIDDEN, bottomBar?.let { it.translationY != 0F }
-                ?: false)
+        outState.putBoolean(BOTTOM_IS_HIDDEN, bottomBar?.let { it.translationY != 0F } == true)
         outState.putBoolean(PLAYER_OPENED, if (::playerBehavior.isInitialized) playerBehavior.state == STATE_EXPANDED else false)
         outState.putIntegerArrayList(SHOWN_TIPS, shownTips)
         if (::audioPlayer.isInitialized) outState.putBoolean(BOOKMARK_VISIBLE, audioPlayer.areBookmarksVisible())
@@ -758,7 +769,7 @@ open class AudioPlayerContainerActivity : BaseActivity(), KeycodeListener, Sched
         MediaParsingService.newStorages.observe(this) { devices ->
             if (devices == null) return@observe
             for (device in devices) UiTools.newStorageDetected(this@AudioPlayerContainerActivity, device)
-            MediaParsingService.newStorages.setValue(null)
+            MediaParsingService.newStorages.value = null
         }
     }
 

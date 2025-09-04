@@ -36,23 +36,24 @@ import androidx.preference.ListPreference
 import androidx.preference.Preference
 import org.videolan.libvlc.util.AndroidUtil
 import org.videolan.medialibrary.interfaces.Medialibrary
-import org.videolan.resources.KEY_AUDIO_LAST_PLAYLIST
-import org.videolan.resources.KEY_CURRENT_AUDIO
-import org.videolan.resources.KEY_CURRENT_AUDIO_RESUME_ARTIST
-import org.videolan.resources.KEY_CURRENT_AUDIO_RESUME_THUMB
-import org.videolan.resources.KEY_CURRENT_AUDIO_RESUME_TITLE
-import org.videolan.resources.KEY_CURRENT_MEDIA
-import org.videolan.resources.KEY_CURRENT_MEDIA_RESUME
-import org.videolan.resources.KEY_MEDIA_LAST_PLAYLIST
-import org.videolan.resources.KEY_MEDIA_LAST_PLAYLIST_RESUME
 import org.videolan.resources.util.parcelable
 import org.videolan.tools.AUDIO_RESUME_PLAYBACK
+import org.videolan.tools.KEY_AUDIO_LAST_PLAYLIST
+import org.videolan.tools.KEY_CURRENT_AUDIO
+import org.videolan.tools.KEY_CURRENT_AUDIO_RESUME_ARTIST
+import org.videolan.tools.KEY_CURRENT_AUDIO_RESUME_THUMB
+import org.videolan.tools.KEY_CURRENT_AUDIO_RESUME_TITLE
+import org.videolan.tools.KEY_CURRENT_MEDIA
+import org.videolan.tools.KEY_CURRENT_MEDIA_RESUME
+import org.videolan.tools.KEY_MEDIA_LAST_PLAYLIST
+import org.videolan.tools.KEY_MEDIA_LAST_PLAYLIST_RESUME
 import org.videolan.tools.PLAYBACK_HISTORY
 import org.videolan.tools.RESULT_RESTART
 import org.videolan.tools.Settings
 import org.videolan.tools.Settings.isPinCodeSet
 import org.videolan.tools.VIDEO_RESUME_PLAYBACK
 import org.videolan.vlc.R
+import org.videolan.vlc.gui.EqualizerSettingsActivity
 import org.videolan.vlc.gui.PinCodeActivity
 import org.videolan.vlc.gui.PinCodeReason
 import org.videolan.vlc.gui.SecondaryActivity
@@ -117,6 +118,9 @@ class PreferencesFragment : BasePreferenceFragment(), SharedPreferences.OnShared
                 R.xml.preferences_remote_access -> loadFragment(PreferencesRemoteAccess().apply {
                     arguments = bundleOf(EXTRA_PREF_END_POINT to endPoint)
                 })
+                R.xml.preferences_android_auto -> loadFragment(PreferencesAndroidAuto().apply {
+                    arguments = bundleOf(EXTRA_PREF_END_POINT to endPoint)
+                })
             }
             arguments = null
         }
@@ -160,6 +164,7 @@ class PreferencesFragment : BasePreferenceFragment(), SharedPreferences.OnShared
             "video_category" -> loadFragment(PreferencesVideo())
             "subtitles_category" -> loadFragment(PreferencesSubtitles())
             "audio_category" -> loadFragment(PreferencesAudio())
+            "equalizer" -> startActivity(Intent(requireActivity().applicationContext, EqualizerSettingsActivity::class.java))
             "adv_category" -> loadFragment(PreferencesAdvanced())
             "casting_category" -> loadFragment(PreferencesCasting())
             "parental_control" -> {

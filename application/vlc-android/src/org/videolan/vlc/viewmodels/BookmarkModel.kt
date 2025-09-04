@@ -26,11 +26,15 @@ package org.videolan.vlc.viewmodels
 
 import android.content.Context
 import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.*
-import kotlinx.coroutines.*
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.videolan.libvlc.MediaPlayer
 import org.videolan.libvlc.interfaces.IMedia
 import org.videolan.medialibrary.Tools
@@ -82,7 +86,7 @@ class BookmarkModel : ViewModel(), PlaybackService.Callback {
 
     companion object {
         fun get(activity: FragmentActivity) =
-            ViewModelProvider(activity).get(BookmarkModel::class.java)
+            ViewModelProvider(activity)[BookmarkModel::class.java]
     }
 
     override fun update() = refresh()
@@ -119,7 +123,7 @@ class BookmarkModel : ViewModel(), PlaybackService.Callback {
         }
     }
 
-    suspend fun rename(bookmark: Bookmark, name: String) : List<Bookmark> {
+    fun rename(bookmark: Bookmark, name: String) : List<Bookmark> {
         var bookmarks: List<Bookmark> = listOf()
         service?.currentMediaWrapper?.let {
             viewModelScope.launch {

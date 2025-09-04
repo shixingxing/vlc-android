@@ -5,7 +5,7 @@ plugins {
 
 android {
     compileOptions {
-        coreLibraryDesugaringEnabled true
+        coreLibraryDesugaringEnabled = true
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
@@ -31,13 +31,10 @@ android {
 
     defaultConfig {
         applicationId rootProject.ext.appId
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
-        compileSdk rootProject.ext.compileSdkVersion
         versionCode rootProject.ext.versionCode
         versionName rootProject.ext.versionName
         vectorDrawables.useSupportLibrary = true
-        multiDexEnabled true
+        multiDexEnabled = true
 
         testInstrumentationRunner "org.videolan.vlc.MultidexTestRunner"
         // The following argument makes the Android Test Orchestrator run its
@@ -58,9 +55,6 @@ android {
         beforeVariants(selector().withBuildType("vlcBundle")) { variantBuilder ->
             variantBuilder.minSdk = 30
         }
-        beforeVariants(selector().withBuildType("vlcBundleAmazon")) { variantBuilder ->
-            variantBuilder.minSdk = rootProject.ext.minSdkVersion
-        }
     }
 
     buildTypes {
@@ -68,7 +62,6 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             kotlinOptions.freeCompilerArgs = ['-Xno-param-assertions']
-            defaultConfig.minSdkVersion rootProject.ext.minSdkVersion
             signingConfig = signingConfigs.release
         }
         signedRelease {
@@ -119,7 +112,7 @@ android {
                 }
                 return false // continue
             }
-            enable isReleaseBuild
+            enable = isReleaseBuild
             reset()
             include "x86", "x86_64", "armeabi-v7a", "arm64-v8a"
 //            universalApk !isReleaseBuild
@@ -128,10 +121,10 @@ android {
 
     def abiCodes = ['armeabi-v7a': 5, 'arm64-v8a': 6, 'x86': 7, 'x86_64': 8]
     lint {
-        abortOnError false
+        abortOnError = false
         disable 'MissingTranslation', 'ExtraTranslation'
     }
-    namespace 'org.videolan.mobile.app'
+    namespace = 'org.videolan.mobile.app'
     // make per-variant version code
     applicationVariants.all { variant ->
         //Custom APK name and versionCode

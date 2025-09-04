@@ -67,7 +67,17 @@
     <string name="set_song_question">Set \'%1$s\' as ringtone?</string>
     <string name="info">Information</string>
     <string name="confirm_delete">Delete the file \'%1$s\'?</string>
+    <string name="equalizer_overwrite_warning">This equalizer already exists</string>
+    <string name="overwrite">Overwrite</string>
+    <string name="eq_cannot_overwrite">Cannot overwrite a default equalizer</string>
+    <string name="equalizer_name">Equalizer name</string>
+    <string name="equalizer_deleted">The equalizer has been deleted</string>
+    <string name="equalizer_leave_warning">You will leave the video player</string>
+    <string name="invalid_equalizer_file">Invalid equalizer file</string>
+    <string name="confirm_delete_eq">Are you sure you want to delete this preset?</string>
+    <string name="confirm_delete_vlc_eq">Are you sure you want to hide this preset?\nYou can restore it in the equalizer settings.</string>
     <string name="confirm_replace_playlist">Are you sure you want to replace the playlist \'%1$s\'?</string>
+    <string name="invalid_settings_file">Invalid settings file</string>
     <string name="confirm_delete_message">This is permanent and cannot be undone.</string>
     <string name="confirm_delete_album">Delete the album \'%1$s\'?</string>
     <string name="confirm_delete_several_media">Delete these %1$d media?</string>
@@ -132,6 +142,14 @@
     <string name="video">Video</string>
     <string name="bookmarks">Bookmarks</string>
     <string name="equalizer">Equalizer</string>
+    <string name="import_equalizer">Import equalizer</string>
+    <string name="equalizer_exported">Equalizer(s) exported to %s</string>
+    <string name="equalizer_copy_template">(copy%s)</string>
+    <string name="new_equalizer_copy_template">New equalizer%s</string>
+    <string name="show_all">Show all</string>
+    <string name="hide_all">Hide all</string>
+    <string name="export_all">Export all</string>
+    <string name="import_all">Import all</string>
     <string name="all_albums">All albums</string>
     <string name="genres">Genres</string>
     <string name="playlists">Playlists</string>
@@ -243,8 +261,6 @@
     <string name="load_2_period" translatable="false">..</string>
     <string name="load_3_period" translatable="false">...</string>
 
-    <string name="encountered_error_title">Playback error</string>
-    <string name="encountered_error_message">VLC encountered an error with this media.\nPlease try refreshing the media library.</string>
     <string name="invalid_location">The location %1$s cannot be played.</string>
     <string name="missing_location">This media is from a unavailable storage and cannot be played.</string>
 
@@ -665,8 +681,10 @@
 
     <!--What's new-->
     <string name="whats_new_title">What\'s new in VLC for Android %s</string>
-    <string name="whats_new_36_webserver_text">With the new remote access feature, take control of VLC for Android from any other device.\nSend your media both ways, control your playback and much more!</string>
-    <string name="whats_new_36_favorites_text">You can now favorite your media, playlists, artists or albums.\nFind your preferred content at a glance by filtering the content by favorites only!</string>
+    <string name="whats_new_37_equalizer_text">The equalizer has been reworked from scratch. It\'s easier to use, lets you disable the default presets and allows you to backup, restore and share your presets.</string>
+    <string name="whats_new_37_import_export">We improved the backup and restore settings feature. It now lets you backup more settings, including the equalizer presets.</string>
+    <string name="whats_new_37_android_auto">Due to some new store constraints, the Android Auto settings have all been moved to the mobile application. It becomes the new place to change your automotive experience.</string>
+    <string name="show_in_settings">Show in settings</string>
 
 <!--    update-->
     <string name="update_title">Update available</string>
@@ -910,7 +928,6 @@
     <string name="eq_snap_bands">Snap bands</string>
     <string name="enable_equalizer">Enable</string>
     <string name="preamp">Preamp</string>
-    <string name="presets">Presets</string>
     <string name="reset">Reset</string>
     <plurals name="tracks_inserted">
         <item quantity="one">%d Track inserted</item>
@@ -1144,6 +1161,11 @@
     <string name="move_down">Move down</string>
     <string name="remove_from_playlist">Remove from playlist</string>
     <string name="play_media">Play %s</string>
+    <string name="edit_eq_preset">Edit equalizer preset</string>
+    <string name="edit_eq_name_not_allowed">This name is not allowed</string>
+    <string name="export_equalizer">Export equalizer</string>
+    <string name="hide_equalizer">Hide equalizer</string>
+    <string name="show_equalizer">Show equalizer</string>
 
     <!-- Duplication Warning Dialog -->
     <string name="message_primary_default">Add duplicated item(s)?</string>
@@ -1371,6 +1393,7 @@
     <string name="export_settings">Export settings</string>
     <string name="restore_settings_summary">Restore your settings from a previous export</string>
     <string name="restore_settings">Restore settings</string>
+    <string name="obsolete_restore_settings">Your settings export is obsolete. Please export them again</string>
     <string name="export_settings_success">Settings exported successfully to the internal storage root</string>
     <string name="export_settings_failure">Something went wrong while exporting your settings</string>
 

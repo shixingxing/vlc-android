@@ -25,7 +25,6 @@ import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.SearchManager
-import android.app.Service
 import android.app.UiModeManager
 import android.appwidget.AppWidgetManager
 import android.content.BroadcastReceiver
@@ -61,7 +60,6 @@ import androidx.annotation.MainThread
 import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.car.app.connection.CarConnection
-import androidx.car.app.notification.CarPendingIntent
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.edit
@@ -111,10 +109,8 @@ import org.videolan.resources.ACTION_REMOTE_SEEK_BACKWARD
 import org.videolan.resources.ACTION_REMOTE_SEEK_FORWARD
 import org.videolan.resources.ACTION_REMOTE_STOP
 import org.videolan.resources.ACTION_REMOTE_SWITCH_VIDEO
-import org.videolan.resources.ANDROID_AUTO_APP_PKG
 import org.videolan.resources.AndroidDevices
 import org.videolan.resources.AppContextProvider
-import org.videolan.resources.CAR_SETTINGS
 import org.videolan.resources.CUSTOM_ACTION
 import org.videolan.resources.CUSTOM_ACTION_BOOKMARK
 import org.videolan.resources.CUSTOM_ACTION_FAST_FORWARD
@@ -145,17 +141,27 @@ import org.videolan.tools.AUDIO_RESUME_PLAYBACK
 import org.videolan.tools.DrawableCache
 import org.videolan.tools.ENABLE_ANDROID_AUTO_SEEK_BUTTONS
 import org.videolan.tools.ENABLE_ANDROID_AUTO_SPEED_BUTTONS
+import org.videolan.tools.KEY_ALWAYS_FAST_SEEK
+import org.videolan.tools.KEY_ANDROID_AUTO_QUEUE_FORMAT_VAL
+import org.videolan.tools.KEY_ANDROID_AUTO_QUEUE_INFO_POS_VAL
+import org.videolan.tools.KEY_ANDROID_AUTO_SUBTITLE_SCALE_VAL
+import org.videolan.tools.KEY_ANDROID_AUTO_TITLE_SCALE_VAL
+import org.videolan.tools.KEY_AUDIO_TASK_REMOVED
+import org.videolan.tools.KEY_ENABLE_HEADSET_DETECTION
+import org.videolan.tools.KEY_ENABLE_PLAY_ON_HEADSET_INSERTION
+import org.videolan.tools.KEY_METERED_CONNECTION
+import org.videolan.tools.KEY_PLAYBACK_SPEED_AUDIO_GLOBAL
 import org.videolan.tools.KEY_VIDEO_APP_SWITCH
 import org.videolan.tools.LOCKSCREEN_COVER
 import org.videolan.tools.POSITION_IN_AUDIO_LIST
 import org.videolan.tools.POSITION_IN_SONG
 import org.videolan.tools.SHOW_SEEK_IN_COMPACT_NOTIFICATION
 import org.videolan.tools.Settings
+import org.videolan.tools.formatRateString
 import org.videolan.tools.getContextWithLocale
 import org.videolan.tools.getResourceUri
 import org.videolan.tools.markBidi
 import org.videolan.tools.readableSize
-import org.videolan.vlc.car.VLCCarService
 import org.videolan.vlc.gui.AudioPlayerContainerActivity
 import org.videolan.vlc.gui.dialogs.VideoTracksDialog
 import org.videolan.vlc.gui.dialogs.adapters.VlcTrack
@@ -265,11 +271,6 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner, CoroutineSc
      */
     lateinit var mediaBrowserCompat:MediaBrowserCompat
 
-    /**
-     * Once a media has shown the speed action once,
-     * continue showing it until the media changes even if the other conditions are not met
-     */
-    private var forceAutoShowSpeed:Pair<String?, Boolean> = Pair(null, false)
 
 
     private val receiver = object : BroadcastReceiver() {
@@ -311,7 +312,7 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner, CoroutineSc
                 Intent.ACTION_HEADSET_PLUG -> if (detectHeadset && state != 0) {
                     if (BuildConfig.DEBUG) Log.i(TAG, "Headset Inserted.")
                     headsetInserted = true
-                    if (wasPlaying && playlistManager.hasCurrentMedia() && settings.getBoolean("enable_play_on_headset_insertion", false))
+                    if (wasPlaying && playlistManager.hasCurrentMedia() && settings.getBoolean(KEY_ENABLE_PLAY_ON_HEADSET_INSERTION, false))
                         play()
                 }
             }/*
@@ -758,7 +759,7 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner, CoroutineSc
             }
         }
 
-        detectHeadset = settings.getBoolean("enable_headset_detection", true)
+        detectHeadset = settings.getBoolean(KEY_ENABLE_HEADSET_DETECTION, true)
 
         // Make sure the audio player will acquire a wake-lock while playing. If we don't do
         // that, the CPU might go to sleep while the song is playing, causing playback to stop.
@@ -805,7 +806,7 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner, CoroutineSc
 
     private fun checkMetered(metered: Boolean) {
         if (!metered) return
-        val meteredAction = (settings.getString("metered_connection", "0") ?: "0").toInt()
+        val meteredAction = (settings.getString(KEY_METERED_CONNECTION, "0") ?: "0").toInt()
         if (meteredAction != 0 && isSchemeStreaming(currentMediaLocation)) {
             if (meteredAction == 1) {
                 stop()
@@ -814,7 +815,7 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner, CoroutineSc
                 (AppContextProvider.currentActivity as? AudioPlayerContainerActivity)?.let {activity ->
                     UiTools.snackerConfirm(activity, getString(R.string.metered_connection_stopped), overAudioPlayer = activity.isAudioPlayerExpanded, confirmMessage = R.string.preferences) {
                         lifecycleScope.launch {
-                            PreferencesActivity.launchWithPref(activity as FragmentActivity, "metered_connection")
+                            PreferencesActivity.launchWithPref(activity as FragmentActivity, KEY_METERED_CONNECTION)
                         }
                     }
                 } ?: run {
@@ -824,7 +825,7 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner, CoroutineSc
                 AppContextProvider.currentActivity?.let {activity ->
                     UiTools.snackerConfirm(activity, getString(R.string.metered_connection_warning), overAudioPlayer = activity is AudioPlayerContainerActivity && activity.isAudioPlayerExpanded, confirmMessage = R.string.preferences) {
                         lifecycleScope.launch {
-                            PreferencesActivity.launchWithPref(activity as FragmentActivity, "metered_connection")
+                            PreferencesActivity.launchWithPref(activity as FragmentActivity, KEY_METERED_CONNECTION)
                         }
                     }
                 } ?: run {
@@ -862,7 +863,7 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner, CoroutineSc
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        forceForeground(intent?.extras?.getBoolean("foreground", false) ?: false)
+        forceForeground(intent?.extras?.getBoolean("foreground", false) == true)
         dispatcher.onServicePreSuperOnStart()
         setupScope()
         when (intent?.action) {
@@ -900,11 +901,11 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner, CoroutineSc
                 }
             }
         }
-        return Service.START_NOT_STICKY
+        return START_NOT_STICKY
     }
 
     override fun onTaskRemoved(rootIntent: Intent) {
-        if (settings.getBoolean("audio_task_removed", false)) stop()
+        if (settings.getBoolean(KEY_AUDIO_TASK_REMOVED, false)) stop()
     }
 
     override fun onDestroy() {
@@ -984,7 +985,7 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner, CoroutineSc
     }
 
     fun setTime(time: Long, fast: Boolean = false) {
-        val shouldFast = fast || (!playlistManager.isBenchmark && settings.getBoolean("always_fast_seek", false))
+        val shouldFast = fast || (!playlistManager.isBenchmark && settings.getBoolean(KEY_ALWAYS_FAST_SEEK, false))
         playlistManager.player.setTime(time, shouldFast)
         publishState(time)
     }
@@ -1179,28 +1180,36 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner, CoroutineSc
                 putLong(MediaMetadataCompat.METADATA_KEY_DURATION, if (length != 0L) length else -1L)
             }
             if (carMode) {
+                val speedStr = buildString {
+                    append(speed.formatRateString())
+                    if (settings.getBoolean(KEY_PLAYBACK_SPEED_AUDIO_GLOBAL, false))
+                        append(" (${getString(R.string.playback_speed_all_tracks)})")
+                    else
+                        append(" (${getString(R.string.playback_speed_this_track)})")
+                }
                 var carTitle = title
                 var carSubtitle = MediaUtils.getDisplaySubtitle(ctx, media)
-                val shortQueue = settings.getInt("android_auto_queue_format_val", 1) == 0
+                val shortQueue = settings.getInt(KEY_ANDROID_AUTO_QUEUE_FORMAT_VAL, 1) == 0
                 val queueInfo = MediaUtils.getQueuePosition(currentMediaPosition, mediaListSize, shortQueue)
 
                 /* Add the queue position information to the underlying string */
-                when (settings.getInt("android_auto_queue_info_pos_val", 3)) {
+                when (settings.getInt(KEY_ANDROID_AUTO_QUEUE_INFO_POS_VAL, 3)) {
                     1 -> carTitle = TextUtils.separatedString(queueInfo, carTitle.markBidi())
                     2 -> carTitle = TextUtils.separatedString(carTitle.markBidi(), queueInfo)
                     3 -> carSubtitle = TextUtils.separatedString(queueInfo, carSubtitle)
                 }
+                if (speed != 1F) carSubtitle = TextUtils.separatedString(speedStr, carSubtitle)
                 /**
                  * This section allows for variability in the title and subtitle contents.
                  */
                 // Set Display Title
                 val displayTitle = arrayOf(chapterTitle, carTitle).firstNotNullAsSpannable()?.also {
-                    val titleScaleFactor = settings.getInt("android_auto_title_scale_val", 100) / 100f
+                    val titleScaleFactor = settings.getInt(KEY_ANDROID_AUTO_TITLE_SCALE_VAL, 100) / 100f
                     it.setSpan(RelativeSizeSpan(titleScaleFactor), 0, it.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                 }
                 // Set Display Subtitle Font Size
                 val displaySubtitle = arrayOf(displayMsg, carSubtitle).firstNotNullAsSpannable()?.also {
-                    val subTitleScaleFactor = settings.getInt("android_auto_subtitle_scale_val", 100) / 100f
+                    val subTitleScaleFactor = settings.getInt(KEY_ANDROID_AUTO_SUBTITLE_SCALE_VAL, 100) / 100f
                     it.setSpan(RelativeSizeSpan(subTitleScaleFactor), 0, it.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
                     // Add italics for subtitle messages
                     if (displayMsg != null) { it.setSpan(StyleSpan(Typeface.ITALIC), 0, it.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE) }
@@ -1229,9 +1238,10 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner, CoroutineSc
                 bob.putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI, albumArtUri.toString())
                 if (!carMode) {
                     val cover = AudioUtil.readCoverBitmap(Uri.decode(media.artworkMrl), 512)
-                    if (cover?.config != null)
+                    val config = cover?.config
+                    if (config != null)
                     //In case of format not supported
-                        bob.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, cover.copy(cover.config, false))
+                        bob.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, cover.copy(config, false))
                     else
                         bob.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, ctx.getBitmapFromDrawable(R.drawable.ic_no_media, 512, 512))
                 }
@@ -1353,10 +1363,7 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner, CoroutineSc
     }
 
     private fun addCustomSpeedActions(pscb: PlaybackStateCompat.Builder, showSpeedActions: Boolean = true) {
-        if (speed != 1.0F || showSpeedActions || ( currentMediaWrapper?.uri != null && forceAutoShowSpeed.first == currentMediaWrapper?.uri?.toString() && forceAutoShowSpeed.second)) {
-            currentMediaWrapper?.uri?.let {
-                forceAutoShowSpeed = Pair(it.toString(), true)
-            }
+        if (showSpeedActions) {
             val speedIcons = hashMapOf(
                     0.50f to R.drawable.ic_auto_speed_0_50,
                     0.80f to R.drawable.ic_auto_speed_0_80,
@@ -1369,7 +1376,7 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner, CoroutineSc
             val speedResId = speedIcons[speedIcons.keys.minByOrNull { (speed - it).absoluteValue }]
                     ?: R.drawable.ic_auto_speed
             pscb.addCustomAction(CUSTOM_ACTION_SPEED, getString(R.string.playback_speed), speedResId)
-        } else forceAutoShowSpeed = Pair(null, false)
+        }
     }
 
     fun notifyTrackChanged() {
@@ -1772,7 +1779,7 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner, CoroutineSc
     fun setRate(rate: Float, save: Boolean) {
         playlistManager.player.setRate(rate, save)
         lifecycleScope.launch(Dispatchers.Main) {
-            publishState()
+            executeUpdate(true)
         }
     }
 
@@ -1805,7 +1812,7 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner, CoroutineSc
     fun seek(time: Long, length: Double = this.length.toDouble(), fromUser: Boolean = false, fast: Boolean = false) {
         if (length > 0.0) this.setTime(time, fast) else {
             setPosition((time.toFloat() / NO_LENGTH_PROGRESS_MAX.toFloat()))
-            if (fromUser) publishState(time)
+            publishState(time)
         }
         // Required to update timeline when paused
         if (fromUser && isPaused) showNotification()
@@ -1923,13 +1930,6 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner, CoroutineSc
                 val extras = MediaSessionBrowser.getContentStyle().apply {
                     putBoolean(BrowserRoot.EXTRA_SUGGESTED, true)
                     putBoolean(MediaConstants.BROWSER_SERVICE_EXTRAS_KEY_SEARCH_SUPPORTED, true)
-                }
-                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.O && clientPackageName == ANDROID_AUTO_APP_PKG) {
-                    val intent = Intent(CAR_SETTINGS).apply {
-                        component = ComponentName(ctx, VLCCarService::class.java)
-                    }
-                    val pendingIntent = CarPendingIntent.getCarApp(ctx, 0, intent, PendingIntent.FLAG_MUTABLE)
-                    extras.putParcelable(MediaConstants.BROWSER_SERVICE_EXTRAS_KEY_APPLICATION_PREFERENCES_USING_CAR_APP_LIBRARY_INTENT, pendingIntent)
                 }
                 BrowserRoot(rootId, extras)
             }
@@ -2069,9 +2069,9 @@ class PlaybackService : MediaBrowserServiceCompat(), LifecycleOwner, CoroutineSc
 
     fun isCarMode(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            carConnection.type.value?.let { it > CarConnection.CONNECTION_TYPE_NOT_CONNECTED } ?: false
+            carConnection.type.value?.let { it > CarConnection.CONNECTION_TYPE_NOT_CONNECTED } == true
         } else {
-            (getSystemService(Context.UI_MODE_SERVICE) as UiModeManager).currentModeType == Configuration.UI_MODE_TYPE_CAR
+            (getSystemService(UI_MODE_SERVICE) as UiModeManager).currentModeType == Configuration.UI_MODE_TYPE_CAR
         }
     }
 }

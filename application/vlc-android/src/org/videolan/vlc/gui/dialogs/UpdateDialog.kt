@@ -25,7 +25,6 @@
 package org.videolan.vlc.gui.dialogs
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES
@@ -36,7 +35,6 @@ import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
 import kotlinx.coroutines.launch
-import org.videolan.resources.util.parcelable
 import org.videolan.tools.KEY_SHOW_UPDATE
 import org.videolan.tools.Settings
 import org.videolan.tools.putSingle
@@ -74,8 +72,8 @@ class UpdateDialog : VLCBottomSheetDialogFragment() {
         updateDate = Date(savedInstanceState?.getLong(UPDATE_DATE)
                 ?: arguments?.getLong(UPDATE_DATE)?: throw IllegalStateException("Update date not provided"))
 
-        newInstall = savedInstanceState?.getBoolean(NEW_INSTALL)
-                ?: arguments?.getBoolean(NEW_INSTALL) ?: false
+        newInstall = (savedInstanceState?.getBoolean(NEW_INSTALL)
+                ?: arguments?.getBoolean(NEW_INSTALL) == true)
 
     }
 
@@ -94,7 +92,7 @@ class UpdateDialog : VLCBottomSheetDialogFragment() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 if (!requireActivity().packageManager.canRequestPackageInstalls()) {
                     startActivityForResult(Intent(ACTION_MANAGE_UNKNOWN_APP_SOURCES)
-                            .setData(Uri.parse(String.format("package:%s", requireActivity().packageName))), 1)
+                            .setData(String.format("package:%s", requireActivity().packageName).toUri()), 1)
                     return@setOnClickListener
                 }
             }

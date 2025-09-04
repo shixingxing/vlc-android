@@ -69,9 +69,11 @@ import androidx.core.content.getSystemService
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
+import androidx.core.graphics.drawable.toDrawable
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.core.view.MenuItemCompat
+import androidx.core.view.WindowCompat
 import androidx.databinding.BindingAdapter
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
@@ -131,6 +133,7 @@ import org.videolan.resources.TV_CONFIRMATION_ACTIVITY
 import org.videolan.resources.util.launchForeground
 import org.videolan.tools.BitmapCache
 import org.videolan.tools.KEY_APP_THEME
+import org.videolan.tools.KEY_INCLUDE_MISSING
 import org.videolan.tools.KEY_INCOGNITO
 import org.videolan.tools.KEY_INCOGNITO_PLAYBACK_SPEED_AUDIO_GLOBAL_VALUE
 import org.videolan.tools.KEY_INCOGNITO_PLAYBACK_SPEED_VIDEO_GLOBAL_VALUE
@@ -364,8 +367,8 @@ object UiTools {
      * Print an on-screen message to alert the user, with undo action
      */
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    fun snackerConfirm(activity: Activity, message: String, overAudioPlayer: Boolean = false, @StringRes confirmMessage:Int = R.string.ok, indefinite:Boolean = false, action: () -> Unit) {
-        val view = getSnackAnchorView(activity, overAudioPlayer) ?: return
+    fun snackerConfirm(activity: Activity, message: String, overAudioPlayer: Boolean = false, @StringRes confirmMessage:Int = R.string.ok, forcedView: View? = null, indefinite:Boolean = false, action: () -> Unit) {
+        val view = forcedView ?: (getSnackAnchorView(activity, overAudioPlayer) ?: return)
         val snack = Snackbar.make(view, message, if (indefinite) Snackbar.LENGTH_INDEFINITE else Snackbar.LENGTH_LONG)
                 .setAction(confirmMessage) { action.invoke() }
         if (overAudioPlayer) snack.setAnchorView(R.id.time)
@@ -414,7 +417,7 @@ object UiTools {
         val snack = Snackbar.make(view, activity.getString(R.string.missing_media_snack), Snackbar.LENGTH_LONG)
                 .setAction(R.string.ok) {
                     activity.lifecycleScope.launch {
-                        PreferencesActivity.launchWithPref(activity, "include_missing")
+                        PreferencesActivity.launchWithPref(activity, KEY_INCLUDE_MISSING)
                     }
                 }
         if (VlcMigrationHelper.isLolliPopOrLater)
@@ -1073,7 +1076,21 @@ fun BaseActivity.applyTheme() {
         setTheme(R.style.Theme_VLC_Black)
         return
     }
-    AppCompatDelegate.setDefaultNightMode(Integer.valueOf(settings.getString(KEY_APP_THEME, "-1")!!))
+
+    val string = settings.getString(KEY_APP_THEME, "-1")
+    when (string) {
+        "1" -> {
+            window.setBackgroundDrawable(ContextCompat.getColor(this, R.color.white).toDrawable())
+            WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = true
+            WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightNavigationBars = true
+        }
+        "2" -> {
+            window.setBackgroundDrawable(ContextCompat.getColor(this, R.color.mini_player_dark).toDrawable())
+            WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = false
+            WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightNavigationBars = false
+        }
+    }
+    AppCompatDelegate.setDefaultNightMode(Integer.valueOf(string!!))
 }
 
 fun getTvIconRes(mediaLibraryItem: MediaLibraryItem) = when (mediaLibraryItem.itemType) {

@@ -45,8 +45,8 @@ import org.videolan.medialibrary.interfaces.Medialibrary
 import org.videolan.medialibrary.interfaces.media.Album
 import org.videolan.medialibrary.interfaces.media.MediaWrapper
 import org.videolan.medialibrary.media.MediaLibraryItem
-import org.videolan.resources.KEY_AUDIO_ALBUM_SONG_CURRENT_TAB
 import org.videolan.resources.util.parcelable
+import org.videolan.tools.KEY_AUDIO_ALBUM_SONG_CURRENT_TAB
 import org.videolan.tools.Settings
 import org.videolan.tools.dp
 import org.videolan.tools.putSingle
@@ -102,7 +102,7 @@ class AudioAlbumsSongsFragment : BaseAudioBrowser<AlbumSongsViewModel>(), SwipeR
         val item = savedInstanceState?.parcelable(AudioBrowserFragment.TAG_ITEM)
                 ?: arguments?.parcelable<MediaLibraryItem>(AudioBrowserFragment.TAG_ITEM)
         viewModel = getViewModel(item!!)
-        fromAlbums = savedInstanceState?.getBoolean(HeaderMediaListActivity.ARTIST_FROM_ALBUM) ?: arguments?.getBoolean(HeaderMediaListActivity.ARTIST_FROM_ALBUM, false) ?: false
+        fromAlbums = savedInstanceState?.getBoolean(HeaderMediaListActivity.ARTIST_FROM_ALBUM) ?: arguments?.getBoolean(HeaderMediaListActivity.ARTIST_FROM_ALBUM, false) == true
         PlaylistManager.currentPlayedMedia.observe(this) {
             songsAdapter.currentMedia = it
         }
@@ -120,8 +120,8 @@ class AudioAlbumsSongsFragment : BaseAudioBrowser<AlbumSongsViewModel>(), SwipeR
         spacing = resources.getDimension(R.dimen.kl_small).toInt()
         val itemSize = RecyclerSectionItemGridDecoration.getItemSize(requireActivity().getScreenWidth(), nbColumns, spacing, 16.dp)
 
-        val albumsList = viewPager.getChildAt(MODE_ALBUM).findViewById(R.id.audio_list) as RecyclerView
-        val songsList = viewPager.getChildAt(MODE_SONG).findViewById(R.id.audio_list) as RecyclerView
+        val albumsList: RecyclerView = viewPager.getChildAt(MODE_ALBUM).findViewById(R.id.audio_list)
+        val songsList: RecyclerView = viewPager.getChildAt(MODE_SONG).findViewById(R.id.audio_list)
 
         lists = arrayOf(albumsList, songsList)
         val titles = arrayOf(getString(R.string.albums), getString(R.string.songs))

@@ -18,16 +18,12 @@ android {
 
 
     defaultConfig {
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
-        compileSdk rootProject.ext.compileSdkVersion
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
 
         buildConfigField 'int', 'VLC_VERSION_CODE', "${rootProject.ext.versionCode}"
         buildConfigField "String", "MOVIEPEDIA_API_URL", "\"${getMoviepediaUrl(project)}\""
-        multiDexEnabled true
+        multiDexEnabled = true
     }
 
     buildTypes {
@@ -47,9 +43,9 @@ android {
             matchingFallbacks = ['release']
         }
     }
-    namespace 'org.videolan.moviepedia'
+    namespace = 'org.videolan.moviepedia'
     buildFeatures {
-        buildConfig true
+        buildConfig = true
     }
 
 }

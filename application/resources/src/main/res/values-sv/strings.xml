@@ -66,7 +66,17 @@
     <string name="set_song_question">Ange  \"%1$s\" som ringsignal?</string>
     <string name="info">Information</string>
     <string name="confirm_delete">Radera filen \"%1$s\"?</string>
+    <string name="equalizer_overwrite_warning">Denna equalizer finns redan</string>
+    <string name="overwrite">Skriv över</string>
+    <string name="eq_cannot_overwrite">Kan inte skriva över en standardequalizer</string>
+    <string name="equalizer_name">Equalizernamn</string>
+    <string name="equalizer_deleted">Equalizern har raderats</string>
+    <string name="equalizer_leave_warning">Du kommer att lämna videospelaren</string>
+    <string name="invalid_equalizer_file">Ogiltigt namn på equalizer</string>
+    <string name="confirm_delete_eq">Är du säker på att du vill radera denna förinställning?</string>
+    <string name="confirm_delete_vlc_eq">Är du säker på att du vill dölja denna förinställning?\nDu kan återställa den i equalizerinställningarna.</string>
     <string name="confirm_replace_playlist">Är du säker på att du vill ersätta spellistan \"%1$s\"?</string>
+    <string name="invalid_settings_file">Ogiltig inställningsfil</string>
     <string name="confirm_delete_message">Detta är permanent och kan inte ångras.</string>
     <string name="confirm_delete_album">Radera albumet \"%1$s\"?</string>
     <string name="confirm_delete_several_media">Radera dessa %1$d mediafiler?</string>
@@ -131,6 +141,14 @@
     <string name="video">Video</string>
     <string name="bookmarks">Bokmärken</string>
     <string name="equalizer">Equalizer</string>
+    <string name="import_equalizer">Importera equalizer</string>
+    <string name="equalizer_exported">Equalizer exporterades till %s</string>
+    <string name="equalizer_copy_template">(kopiera %s)</string>
+    <string name="new_equalizer_copy_template">Ny equalizer%s</string>
+    <string name="show_all">Visa alla</string>
+    <string name="hide_all">Dölj alla</string>
+    <string name="export_all">Exportera alla</string>
+    <string name="import_all">Importera alla</string>
     <string name="all_albums">Alla album</string>
     <string name="genres">Genrer</string>
     <string name="playlists">Spellistor</string>
@@ -236,8 +254,6 @@
 
     <string name="streams">Strömmar</string>
     <string name="open_mrl_dialog_msg">Ange nätverksadress: d.v.s. http://, mms:// eller rtsp://</string>
-    <string name="encountered_error_title">Uppspelningsfel</string>
-    <string name="encountered_error_message">VLC stötte på ett fel med denna mediafil.\nFörsök att uppdatera mediebiblioteket.</string>
     <string name="invalid_location">Platsen %1$s kan inte spelas upp.</string>
     <string name="missing_location">Denna mediafil kommer från ett otillgängligt lagringsutrymme och kan inte spelas upp.</string>
 
@@ -320,6 +336,9 @@
     <string name="add_custom_path_description">Ange ytterligare valfria kataloger att söka igenom:</string>
     <string name="remove_custom_path">Ta bort anpassad sökväg</string>
     <string name="group_ban_folder">Bannlys mappen från mediabiblioteket</string>
+    <string name="ban_folder">Bannlys mapp</string>
+    <string name="ban_folder_explanation">Om du bannlyser mappen kommer du inte att kunna se mappens mediafiler i appens video- eller ljudavsnitt, men de är fortfarande tillgängliga via filväljaren.\nFör att upphäva bannlysningen går du till inställningarna, %s och trycker länge på mappen.</string>
+
     <string name="hardware_acceleration">Hårdvaruacceleration</string>
     <string name="hardware_acceleration_summary">Inaktiverad: Bättre stabilitet\nAvkodning: Kan förbättra prestandan\nFull: Kan förbättra prestandan ytterligare</string>
     <string name="hardware_acceleration_disabled">Inaktiverad</string>
@@ -518,7 +537,7 @@
     <string name="show_headers">Visa sidhuvuden</string>
     <string name="show_headers_summary">Dela upp listor efter sidhuvuden beroende på sorteringstypen</string>
     <string name="tv_folders_first">Visa mappar överst</string>
-    <string name="tv_folders_first_summary">Visa mappar och sedan filer i filbläddraren</string>
+    <string name="tv_folders_first_summary">Visa mappar och sedan filer i filväljaren</string>
     <string name="tv_show_hidden_files">Visa dolda filer</string>
     <string name="tv_show_hidden_files_summary">Visa dolda filer i filväljaren</string>
     <string name="ab_repeat_fastseek_warning">Snabbsökning har aktiverats. Detta kan leda till precisionsfel</string>
@@ -592,10 +611,10 @@
     <string name="custom_libvlc_options_invalid">Ogiltiga libVLC-alternativ!</string>
     <string name="dav1d_thread_number">Trådnummer för Dav1d</string>
     <string name="dav1d_thread_number_invalid">Ogiltigt trådnummer! (>=1)</string>
-    <string name="browser_quick_play">Snabbuppspelning i webbläsarmenyn</string>
-    <string name="browser_quick_play_summary">Lägger till ett menyalternativ för snabbuppspelning i webbläsaren. Detta gör att mediafiler läser in snabbare på bekostnad av vissa metadata</string>
+    <string name="browser_quick_play">Snabbuppspelning i filväljarmenyn</string>
+    <string name="browser_quick_play_summary">Lägger till ett menyalternativ för snabbuppspelning i filväljaren. Detta gör att mediafiler läser in snabbare på bekostnad av vissa metadata</string>
     <string name="browser_quick_play_default">Snabbuppspelning som standardåtgärd</string>
-    <string name="browser_quick_play_default_summary">När detta aktiveras kommer snabbuppspelning användas för att spela upp objekt i webbläsaren</string>
+    <string name="browser_quick_play_default_summary">När detta aktiveras kommer snabbuppspelning användas för att spela upp objekt i filväljaren</string>
 
     <string name="serious_crash">Tyvärr uppstod ett allvarligt fel och VLC blev tvungen att stängas ned.</string>
     <string name="help_us_send_log">Hjälp oss att förbättra VLC genom att skicka följande kraschlogg:</string>
@@ -623,6 +642,8 @@
     <string name="network_shares_discovery">Letar efter nätverksdelningar</string>
     <string name="network_empty">Denna katalog är tom.</string>
     <string name="network_connection_needed">Ingen anslutning till lokalt nätverk</string>
+    <string name="network_disabled">Bläddra nätverk har inaktiverats</string>
+    <string name="browse_network">Bläddra nätverk</string>
     <string name="search_hint">Sök media</string>
     <string name="search_in_list_hint">Sök i nuvarande lista</string>
     <string name="search_global">Sök i alla mediabibliotek</string>
@@ -643,8 +664,9 @@
 
     <!--What's new-->
     <string name="whats_new_title">Vad är nytt i VLC for Android %s</string>
-    <string name="whats_new_36_webserver_text">Med denna nya funktionalitet kan du fjärrstyra VLC for Android från en annan enhet.\nSkicka dina mediafiler åt båda håll, styr din uppspelning och mycket mer!</string>
-    <string name="whats_new_36_favorites_text">Du kan nu favoritmarkera dina mediafiler, spellistor, artister och album.\nHitta innehållet du föredrar på ett ögonblick genom att filtrera innehållet efter endast favoriter!</string>
+    <string name="whats_new_37_equalizer_text">Equalizern har omarbetats från grunden. Den är enklare att använda, låter dig inaktiverat standardinställningarna och gör det möjligt att säkerhetskopiera, återställa och dela dina inställningar.</string>
+    <string name="whats_new_37_import_export">Vi har förbättrat funktionen för säkerhetskopiering och återställning av inställningar. Nu kan du säkerhetskopiera fler inställningar, inklusive förinställningarna för equalizern.</string>
+    <string name="show_in_settings">Visa i inställningar</string>
 
 <!--    update-->
     <string name="update_title">Uppdatering är tillgänglig</string>
@@ -805,11 +827,11 @@
     <string name="playback_rewind">Spola tillbaka</string>
     <string name="playback_forward">Spola framåt</string>
     <string name="ml_wizard_scan_checkbox">Skanna enheten för mediainnehåll</string>
-    <string name="ml_wizard_description">Välj om VLC ska skanna din enhetslagring för att organisera ditt mediabibliotek eller ska bara användas som en enkel uppspelare med en integrerad filbläddrare.</string>
+    <string name="ml_wizard_description">Välj om VLC ska skanna din enhetslagring för att organisera ditt mediabibliotek eller ska bara användas som en enkel uppspelare med en integrerad filväljare.</string>
     <string name="tv_my_new_videos">Mina nya videor</string>
     <string name="cast_option_title">Casta mediafiler på en annan skärm</string>
     <string name="otg_device_title">OTG-enhet</string>
-    <string name="browser">Filbläddrare</string>
+    <string name="browser">Filväljare</string>
     <string name="ab_repeat">Upprepa A-B</string>
     <string name="ab_repeat_reset">Nollställ A-B-upprepning</string>
     <string name="ab_repeat_stop">Stoppa A-B-upprepning</string>
@@ -887,7 +909,6 @@
     <string name="eq_snap_bands">Fäst band</string>
     <string name="enable_equalizer">Aktivera</string>
     <string name="preamp">Försteg</string>
-    <string name="presets">Förinställningar</string>
     <string name="reset">Nollställ</string>
     <plurals name="tracks_inserted">
         <item quantity="one">%d spår lades till</item>
@@ -1121,6 +1142,11 @@
     <string name="move_down">Flytta ned</string>
     <string name="remove_from_playlist">Ta bort från spellistan</string>
     <string name="play_media">Spela upp %s</string>
+    <string name="edit_eq_preset">Redigera förinställningar för equalizer</string>
+    <string name="edit_eq_name_not_allowed">Namnet är inte tillåtet</string>
+    <string name="export_equalizer">Exportera equalizer</string>
+    <string name="hide_equalizer">Dölj equalizer</string>
+    <string name="show_equalizer">Visa equalizer</string>
 
     <!-- Duplication Warning Dialog -->
     <string name="message_primary_default">Lägg till duplicerade objekt?</string>
@@ -1346,6 +1372,7 @@
     <string name="export_settings">Exportera inställningar</string>
     <string name="restore_settings_summary">Återställ dina inställningar från en tidigare exportering</string>
     <string name="restore_settings">Återställ inställningar</string>
+    <string name="obsolete_restore_settings">Dina exporterade inställningar är föråldrade. Exportera dem igen.</string>
     <string name="export_settings_success">Inställningarna exporterades till intern lagringsrot</string>
     <string name="export_settings_failure">Någonting gick fel när dina inställningar exporterades</string>
 

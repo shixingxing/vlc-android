@@ -26,7 +26,6 @@ package org.videolan.vlc.gui.preferences.search
 
 import android.app.Activity
 import android.content.Context
-import android.content.ContextWrapper
 import android.content.SharedPreferences
 import android.content.res.XmlResourceParser
 import android.net.Uri
@@ -34,16 +33,25 @@ import android.os.Parcelable
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.XmlRes
+import androidx.core.content.edit
 import androidx.fragment.app.FragmentActivity
+import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
-import com.squareup.moshi.Types
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.parcelize.Parcelize
+import org.videolan.medialibrary.interfaces.Medialibrary
+import org.videolan.tools.ALBUMS_SHOW_TRACK_NUMBER
 import org.videolan.tools.AUDIO_DELAY_GLOBAL
 import org.videolan.tools.AUDIO_PLAY_PROGRESS_MODE
+import org.videolan.tools.BROWSER_SHOW_HIDDEN_FILES
+import org.videolan.tools.BROWSER_SHOW_ONLY_MULTIMEDIA
 import org.videolan.tools.CloseableUtils
 import org.videolan.tools.DISPLAY_UNDER_NOTCH
+import org.videolan.tools.KEY_CURRENT_EQUALIZER_ID
+import org.videolan.tools.KEY_ARTISTS_SHOW_ALL
+import org.videolan.tools.KEY_CUSTOM_LIBVLC_OPTIONS
 import org.videolan.tools.KEY_INCOGNITO_PLAYBACK_SPEED_AUDIO_GLOBAL_VALUE
 import org.videolan.tools.KEY_INCOGNITO_PLAYBACK_SPEED_VIDEO_GLOBAL_VALUE
 import org.videolan.tools.KEY_PLAYBACK_SPEED_AUDIO_GLOBAL
@@ -57,13 +65,25 @@ import org.videolan.tools.PREF_TIPS_SHOWN
 import org.videolan.tools.PREF_WIDGETS_TIPS_SHOWN
 import org.videolan.tools.SCREEN_ORIENTATION
 import org.videolan.tools.Settings
+import org.videolan.tools.deleteSharedPreferences
+import org.videolan.tools.getContextWithLocale
 import org.videolan.tools.putSingle
-import org.videolan.tools.wrap
 import org.videolan.vlc.R
 import org.videolan.vlc.gui.helpers.DefaultPlaybackAction
 import org.videolan.vlc.gui.helpers.DefaultPlaybackActionMediaType
 import org.videolan.vlc.gui.helpers.UiTools
+import org.videolan.vlc.providers.medialibrary.AlbumsProvider
+import org.videolan.vlc.providers.medialibrary.ArtistsProvider
+import org.videolan.vlc.providers.medialibrary.FoldersProvider
+import org.videolan.vlc.providers.medialibrary.GenresProvider
+import org.videolan.vlc.providers.medialibrary.PlaylistsProvider
+import org.videolan.vlc.providers.medialibrary.TracksProvider
+import org.videolan.vlc.providers.medialibrary.VideoGroupsProvider
+import org.videolan.vlc.providers.medialibrary.VideosProvider
+import org.videolan.vlc.util.EqualizerExport
+import org.videolan.vlc.util.EqualizerUtil
 import org.videolan.vlc.util.FileUtils
+import org.videolan.vlc.util.VersionMigration
 import org.videolan.vlc.util.share
 import java.io.BufferedWriter
 import java.io.File
@@ -106,7 +126,7 @@ object PreferenceParser {
      */
     fun parsePreferences(context: Context, parseUIPrefs: Boolean = false): ArrayList<PreferenceItem> {
         val result = ArrayList<PreferenceItem>()
-        arrayListOf(R.xml.preferences, R.xml.preferences_adv, R.xml.preferences_audio, R.xml.preferences_casting, R.xml.preferences_subtitles, R.xml.preferences_ui, R.xml.preferences_video, R.xml.preferences_remote_access)
+        arrayListOf(R.xml.preferences, R.xml.preferences_adv, R.xml.preferences_audio, R.xml.preferences_parental_control, R.xml.preferences_casting, R.xml.preferences_subtitles, R.xml.preferences_ui, R.xml.preferences_video, R.xml.preferences_remote_access, R.xml.preferences_android_auto)
             .apply {
                 if (parseUIPrefs) {
                     this.add(R.xml.preferences_video_controls)
@@ -144,18 +164,23 @@ object PreferenceParser {
     /**
      * Compares the preference list with the set settings to get the list of the changed settings by the user
      * @param context the context to be used to retrieve the preferences
+     * @param parseUIPrefs whether to parse the UI preferences or not
+     * @param showTitle whether to show the title of the preference or not
      *
      * @return a list of changed settings in the form a of pair of the key and the value
      */
-    private fun getAllChangedPrefs(context: Context, parseUIPrefs: Boolean = true): ArrayList<Pair<String, Any>> {
+    private fun getAllChangedPrefs(context: Context, parseUIPrefs: Boolean = true, showTitle: Boolean = false): ArrayList<Pair<String, Any>> {
         val allPrefs = parsePreferences(context, parseUIPrefs = parseUIPrefs)
         val allSettings = Settings.getInstance(context).all
         val changedSettings = ArrayList<Pair<String, Any>>()
         allPrefs.forEach { pref ->
             allSettings.forEach { setting ->
-                if (pref.key == setting.key && pref.key != "custom_libvlc_options") {
+                if (pref.key == setting.key && pref.key != KEY_CUSTOM_LIBVLC_OPTIONS) {
                     setting.value?.let {
-                        if (!isSame(it, pref.defaultValue)) changedSettings.add(Pair(pref.key, it))
+                        if (!isSame(it, pref.defaultValue)) {
+                            val first = if (showTitle) "${pref.key} (${pref.titleEng})" else pref.key
+                            changedSettings.add(Pair(first, it))
+                        }
                     }
                 }
             }
@@ -168,17 +193,19 @@ object PreferenceParser {
      *
      * @param context the context to be used to retrieve the preferences
      * @param forVideo if true, returns the video controls else the audio controls
+     * @param showTitle whether to show the title of the preference or not
      * @return a list of changed settings in the form a of pair of the key and the value
      */
-    private fun getAllChangedControlPrefs(context: Context, forVideo: Boolean = false): ArrayList<Pair<String, Any>> {
+    private fun getAllChangedControlPrefs(context: Context, forVideo: Boolean = false, showTitle: Boolean = false): ArrayList<Pair<String, Any>> {
         val allPrefs = parseControlPreferences(context, forVideo = forVideo)
         val allSettings = Settings.getInstance(context).all
         val changedSettings = ArrayList<Pair<String, Any>>()
         allPrefs.forEach { pref ->
             allSettings.forEach { setting ->
-                if (pref.key == setting.key && pref.key != "custom_libvlc_options") {
+                if (pref.key == setting.key && pref.key != KEY_CUSTOM_LIBVLC_OPTIONS) {
                     setting.value?.let {
-                        if (!isSame(it, pref.defaultValue)) changedSettings.add(Pair(pref.key, it))
+                        val first = if (showTitle) "${pref.key} (${pref.titleEng})" else pref.key
+                        if (!isSame(it, pref.defaultValue)) changedSettings.add(Pair(first, it))
                     }
                 }
             }
@@ -207,35 +234,88 @@ object PreferenceParser {
      */
     fun getChangedPrefsString(context: Context) = buildString {
         append("\r\nMain settings:\r\n")
-        getAllChangedPrefs(context, parseUIPrefs = false).forEach { append("\t* ${it.first} -> ${it.second}\r\n") }
+        getAllChangedPrefs(context, parseUIPrefs = false, showTitle = true).forEach { append("* ${it.first} -> ${it.second}\r\n") }
         val videoControls = buildString {
-            getAllChangedControlPrefs(context, forVideo = true).forEach { append("\t* ${it.first} -> ${it.second}\r\n") }
+            getAllChangedControlPrefs(context, forVideo = true, showTitle = true).forEach { append("* ${it.first} -> ${it.second}\r\n") }
         }
         if (videoControls.isNotBlank()) {
             append("\r\nVideo controls:\r\n")
             append(videoControls)
         }
         val audioControls = buildString {
-            getAllChangedControlPrefs(context, forVideo = false).forEach { append("\t* ${it.first} -> ${it.second}\r\n") }
+            getAllChangedControlPrefs(context, forVideo = false, showTitle = true).forEach { append("* ${it.first} -> ${it.second}\r\n") }
         }
         if (audioControls.isNotBlank()) {
             append("\r\nAudio controls:\r\n")
             append(audioControls)
         }
-        //default actions
-        val settings = Settings.getInstance(context)
-        val defaultActions = buildString {
+        //display settings
+        val displaySettings = buildString {
+            val settings = Settings.getInstance(context)
+            val englishContext = context.applicationContext.getContextWithLocale("en")
             DefaultPlaybackActionMediaType.entries.forEach {
                 val currentPlaybackAction = it.getCurrentPlaybackAction(settings)
                 if (currentPlaybackAction != DefaultPlaybackAction.PLAY) {
-                    append("\t* ${it.defaultActionKey} -> $currentPlaybackAction\r\n")
+                    append("* ${it.defaultActionKey} -> ${englishContext.getString(currentPlaybackAction.title)}\r\n")
                 }
             }
+
+            for ((key) in settings.all) {
+                if (key.startsWith("display_mode_")) {
+                    append("* $key -> ${settings.getBoolean(key, false)}\r\n")
+                }
+            }
+
+            for ((key) in settings.all) {
+                if (key.endsWith("_only_favs")) {
+                    append("* $key -> ${settings.getBoolean(key, false)}\r\n")
+                }
+            }
+
+            if (settings.getBoolean(KEY_ARTISTS_SHOW_ALL, false))
+                append("* $KEY_ARTISTS_SHOW_ALL -> true\r\n")
+
+            if (settings.getBoolean(BROWSER_SHOW_ONLY_MULTIMEDIA, false))
+                append("* $BROWSER_SHOW_ONLY_MULTIMEDIA -> true\r\n")
+
+            if (!Settings.showTrackNumber)
+                append("* $ALBUMS_SHOW_TRACK_NUMBER -> false\r\n")
+
+            if (!settings.getBoolean(BROWSER_SHOW_HIDDEN_FILES, true))
+                append("* $BROWSER_SHOW_HIDDEN_FILES -> false\r\n")
+
+            //sorts
+            arrayOf(
+                AlbumsProvider::class.java, ArtistsProvider::class.java, FoldersProvider::class.java, GenresProvider::class.java, PlaylistsProvider::class.java, TracksProvider::class.java,
+                VideoGroupsProvider::class.java, VideosProvider::class.java
+            ).forEach {
+                for ((key) in settings.all) {
+                    if (key.startsWith(it.simpleName) && !key.endsWith("_desc") && !key.endsWith("_only_favs")) {
+                        append("* Sort ${it.simpleName} -> ${settings.getInt(key, 0)} (${getSortName(settings.getInt(key, 0))}) - ${if (settings.getBoolean("${key}_desc", false)) "DESC" else "ASC"}\r\n")
+                    }
+                }
+            }
+
         }
-        if (defaultActions.isNotBlank()) {
-            append("\r\nDefault actions:\r\n")
-            append(defaultActions)
+        if (displaySettings.isNotBlank()) {
+            append("\r\nDisplay settings:\r\n")
+            append(displaySettings)
         }
+    }
+
+    fun getSortName(index:Int) = when(index) {
+        Medialibrary.SORT_DEFAULT -> "Default"
+        Medialibrary.SORT_ALPHA -> "Alphabetical"
+        Medialibrary.SORT_DURATION -> "Duration"
+        Medialibrary.SORT_INSERTIONDATE -> "Insertion date"
+        Medialibrary.SORT_LASTMODIFICATIONDATE -> "Last modification date"
+        Medialibrary.SORT_RELEASEDATE -> "Release date"
+        Medialibrary.SORT_FILESIZE -> "File size"
+        Medialibrary.SORT_ARTIST -> "Artist"
+        Medialibrary.SORT_PLAYCOUNT -> "Play count"
+        Medialibrary.SORT_ALBUM -> "Album"
+        Medialibrary.SORT_FILENAME -> "Filename"
+        else -> "Unknown"
     }
 
     /**
@@ -244,34 +324,18 @@ object PreferenceParser {
      *
      * @return a string of all the changed preferences
      */
-    private fun getChangedPrefsJson(context: Context) = buildString {
-        append("{")
-        val allChangedPrefs = getAllChangedPrefs(context)
-        addAllOtherPrefs(context, allChangedPrefs)
-        for (allChangedPref in allChangedPrefs) {
-            when {
-                allChangedPref.second is Float || allChangedPref.second is Boolean || allChangedPref.second is Int || allChangedPref.second is Long -> append("\"${allChangedPref.first}\": ${allChangedPref.second}")
-                else -> append("\"${allChangedPref.first}\": \"${allChangedPref.second}\"")
-            }
-            if (allChangedPref != allChangedPrefs.last()) append(", ")
-
-        }
-        append("}")
-    }
-
-    private fun addAllOtherPrefs(context: Context, pairs: ArrayList<Pair<String, Any>>) {
-        for ((key, value) in Settings.getInstance(context).all) {
-            if (key.startsWith("custom_equalizer_")) {
-                value?.let {
-                    pairs.add(Pair(key, it))
+    fun getChangedPrefsJson(context: Context):String  {
+        val settingsEntries = arrayListOf<SettingEntry>()
+        Settings.getInstance(context).all.forEach { setting ->
+            if (setting.key !in Settings.getRestoreBlacklist())
+                setting.value?.let {
+                    settingsEntries.add(SettingEntry(setting.key, it, SettingType.getFromAny(it)))
                 }
-            }
-            if (key in additionalSettings) {
-                value?.let {
-                    pairs.add(Pair(key, it))
-                }
-            }
         }
+        val settingsBackup = SettingsBackup(settingsEntries, EqualizerUtil.getEqualizerExport(context), VersionMigration.getCurrentVersion())
+        val moshi = Moshi.Builder().build()
+        val jsonAdapter: JsonAdapter<SettingsBackup> = moshi.adapter(SettingsBackup::class.java)
+        return jsonAdapter.toJson(settingsBackup)!!
     }
 
     /**
@@ -290,7 +354,7 @@ object PreferenceParser {
         val namespace = "http://schemas.android.com/apk/res/android"
         val appNamespace = "http://schemas.android.com/apk/res-auto"
         var firstPrefScreeFound = false
-        val englishContext = ContextWrapper(context).wrap("en")
+        val englishContext = context.applicationContext.getContextWithLocale("en")
         while (eventType != XmlResourceParser.END_DOCUMENT) {
             if (eventType == XmlResourceParser.START_TAG) {
                 val element = parser.name
@@ -382,7 +446,7 @@ object PreferenceParser {
         }
         withContext(Dispatchers.Main) {
             if (success)
-                if (activity is FragmentActivity)
+                if (activity is FragmentActivity && !Settings.tvUI)
                     UiTools.snackerConfirm(activity, activity.getString(R.string.export_settings_success), confirmMessage = R.string.share, overAudioPlayer = false) {
                         activity.share(dst)
                     }
@@ -392,48 +456,71 @@ object PreferenceParser {
         }
     }
 
+
+    suspend fun checkRestoreFile(file: Uri)= withContext(Dispatchers.IO) {
+        file.path?.let {
+            val changedPrefs = FileUtils.getStringFromFile(it)
+            val moshi = Moshi.Builder().build()
+            val adapter: JsonAdapter<SettingsBackup> = moshi.adapter(SettingsBackup::class.java)
+            val savedSettings = adapter.fromJson(changedPrefs)
+
+            if (savedSettings?.settings == null || savedSettings.version == 0) throw IllegalStateException("Invalid file")
+        }
+    }
+
     /**
      * Restore the preferences from a file
      *
      * @param activity the activity to use to restore the preferences
+     * @param file the file to restore the preferences from
      */
     suspend fun restoreSettings(activity: Activity, file: Uri) = withContext(Dispatchers.IO) {
         file.path?.let {
             val changedPrefs = FileUtils.getStringFromFile(it)
             val moshi = Moshi.Builder().build()
-            val adapter = moshi.adapter<Map<String, Any>>(
-                Types.newParameterizedType(
-                    Map::class.java,
-                    String::class.javaObjectType,
-                    Object::class.java
-                )
-            )
+            val adapter: JsonAdapter<SettingsBackup> = moshi.adapter(SettingsBackup::class.java)
             val savedSettings =  adapter.fromJson(changedPrefs)
-            val newPrefs = Settings.getInstance(activity)
-            val allPrefs = parsePreferences(activity, parseUIPrefs = true)
-            savedSettings?.forEach { entry ->
-                allPrefs.forEach {
-                    if (it.key == entry.key  && it.key != "custom_libvlc_options") {
-                        Log.i("PrefParser", "Restored: ${entry.key} -> ${entry.value}")
-                        newPrefs.putSingle(entry.key, if (entry.value is Double) (entry.value as Double).toInt() else entry.value)
+
+            if (savedSettings?.settings == null || savedSettings.version == 0) throw IllegalStateException("Invalid file")
+
+
+            //First create a dedicated shared preference for restoring
+            val restorePrefsName = activity.packageName + "_restore"
+            val restoringPrefs = activity.getSharedPreferences(restorePrefsName, Context.MODE_PRIVATE)
+
+            restoringPrefs.edit {
+                savedSettings.settings.forEach { settingEntry ->
+                    when (settingEntry.type) {
+                        SettingType.BOOLEAN -> putBoolean(settingEntry.key, settingEntry.value as Boolean)
+                        SettingType.INT -> putInt(settingEntry.key, (settingEntry.value as Double).toInt())
+                        SettingType.LONG -> putLong(settingEntry.key, (settingEntry.value as Double).toLong())
+                        SettingType.FLOAT -> putFloat(settingEntry.key, (settingEntry.value as Double).toFloat())
+                        SettingType.SET ->  putStringSet(settingEntry.key, (settingEntry.value as ArrayList<String>).toHashSet())
+
+                        else -> putString(settingEntry.key, settingEntry.value as String)
                     }
-                }
-            }
-            //restore other settings
-            savedSettings?.forEach {
-                if (it.key.startsWith("custom_equalizer_")) {
-                    newPrefs.putSingle(it.key, it.value)
                 }
             }
 
-            savedSettings?.forEach { saved ->
-                additionalSettings.forEach {
-                    if (it == saved.key) {
-                        val value = if (saved.value is Double) (saved.value as Double).toFloat() else saved.value
-                        newPrefs.putSingle(it, value)
-                    }
+            //Migrate the new shared preferences using the version of the restored json file
+            VersionMigration.migrateVersion(activity, restoringPrefs, savedSettings?.version)
+
+            // Copy all the restored settings to the main shared preferences
+            restoringPrefs.all.forEach { setting ->
+                setting.value?.let { newValue ->
+                    Settings.getInstance(activity).putSingle(setting.key, newValue)
                 }
             }
+
+            EqualizerUtil.importAll(activity, savedSettings.equalizers, null)
+
+            //wait a bit for the file to be available to be deleted
+            delay(100)
+
+            //Delete the restore preferences
+           if (!deleteSharedPreferences(activity, restorePrefsName))
+               Log.e("PreferenceParser", "Cannot delete restore preferences")
+
         }
     }
 }
@@ -443,3 +530,26 @@ object PreferenceParser {
  */
 @Parcelize
 data class PreferenceItem(val key: String, val parentScreen: Int, val title: String, val summary: String, val titleEng:String, val summaryEng: String, val category: String, val categoryEng: String, val defaultValue:String?) : Parcelable
+
+
+
+class SettingsBackup(val settings: List<SettingEntry>, val equalizers: EqualizerExport, val version: Int)
+
+class SettingEntry (val key: String, val value: Any, val type: SettingType)
+
+enum class SettingType {
+    STRING, BOOLEAN, INT, LONG, FLOAT, SET;
+
+    companion object {
+        fun getFromAny(any: Any): SettingType {
+            return when (any) {
+                is Boolean -> BOOLEAN
+                is Int -> INT
+                is Long -> LONG
+                is Float -> FLOAT
+                is HashSet<*> -> SET
+                else -> STRING
+            }
+        }
+    }
+}

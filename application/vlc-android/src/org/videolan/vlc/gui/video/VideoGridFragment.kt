@@ -59,9 +59,6 @@ import org.videolan.resources.GROUP_VIDEOS_NONE
 import org.videolan.resources.KEY_FOLDER
 import org.videolan.resources.KEY_GROUP
 import org.videolan.resources.KEY_GROUPING
-import org.videolan.resources.KEY_GROUP_VIDEOS
-import org.videolan.resources.KEY_MEDIA_LAST_PLAYLIST
-import org.videolan.resources.KEY_VIDEOS_CARDS
 import org.videolan.resources.MOVIEPEDIA_ACTIVITY
 import org.videolan.resources.MOVIEPEDIA_MEDIA
 import org.videolan.resources.PLAYLIST_TYPE_VIDEO
@@ -69,6 +66,11 @@ import org.videolan.resources.UPDATE_SEEN
 import org.videolan.resources.util.parcelable
 import org.videolan.resources.util.parcelableArray
 import org.videolan.resources.util.waitForML
+import org.videolan.tools.KEY_CASTING_AUDIO_ONLY
+import org.videolan.tools.KEY_GROUP_VIDEOS
+import org.videolan.tools.KEY_MEDIA_LAST_PLAYLIST
+import org.videolan.tools.KEY_MEDIA_SEEN
+import org.videolan.tools.KEY_VIDEOS_CARDS
 import org.videolan.tools.MultiSelectHelper
 import org.videolan.tools.PLAYBACK_HISTORY
 import org.videolan.tools.RESULT_RESTART
@@ -187,7 +189,7 @@ class VideoGridFragment : MediaBrowserFragment<VideosViewModel>(), SwipeRefreshL
         super.onCreate(savedInstanceState)
         if (!::settings.isInitialized) settings = Settings.getInstance(requireContext())
         if (!::videoListAdapter.isInitialized) {
-            val seenMarkVisible = settings.getBoolean("media_seen", true) && settings.getBoolean(PLAYBACK_HISTORY, true)
+            val seenMarkVisible = settings.getBoolean(KEY_MEDIA_SEEN, true) && settings.getBoolean(PLAYBACK_HISTORY, true)
             videoListAdapter = VideoListAdapter(seenMarkVisible, !settings.getBoolean(PLAYBACK_HISTORY, true)).apply { stateRestorationPolicy = RecyclerView.Adapter.StateRestorationPolicy.PREVENT_WHEN_EMPTY }
             dataObserver = videoListAdapter.onAnyChange {
                 updateEmptyView()
@@ -522,7 +524,7 @@ class VideoGridFragment : MediaBrowserFragment<VideosViewModel>(), SwipeRefreshL
         (multiSelectHelper.getSelection().firstOrNull() as? MediaWrapper)?.let {
             if (it.type != MediaWrapper.TYPE_VIDEO) return@let false
             return@let it.uri.retrieveParent() != null
-        } ?: false
+        } == true
     } else false
 
     override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
@@ -604,7 +606,7 @@ class VideoGridFragment : MediaBrowserFragment<VideosViewModel>(), SwipeRefreshL
     }
 
     fun updateSeenMediaMarker() {
-        videoListAdapter.setSeenMediaMarkerVisible(settings.getBoolean("media_seen", true))
+        videoListAdapter.setSeenMediaMarkerVisible(settings.getBoolean(KEY_MEDIA_SEEN, true))
         videoListAdapter.notifyItemRangeChanged(0, videoListAdapter.itemCount - 1, UPDATE_SEEN)
     }
 
@@ -792,7 +794,7 @@ class VideoGridFragment : MediaBrowserFragment<VideosViewModel>(), SwipeRefreshL
         }
     }
 
-    private fun castAsAudio(): Boolean = PlaybackService.renderer.value != null && settings.getBoolean("casting_audio_only", false)
+    private fun castAsAudio(): Boolean = PlaybackService.renderer.value != null && settings.getBoolean(KEY_CASTING_AUDIO_ONLY, false)
 
     companion object {
         fun newInstance() = VideoGridFragment()

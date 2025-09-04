@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    package="org.videolan.vlc">
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-sdk tools:overrideLibrary="com.jraska.livedata.ktx, com.jraska.livedata, tools.fastlane.screengrab, android_libs.ub_uiautomator, androidx.car.app, androidx.annotation.experimental"/>
 
@@ -992,6 +991,9 @@
             android:name=".gui.LibrariesActivity"
             android:theme="@style/Theme.VLC"/>
         <activity
+            android:name=".gui.EqualizerSettingsActivity"
+            android:theme="@style/Theme.VLC"/>
+        <activity
             android:name=".gui.PinCodeActivity"
             android:theme="@style/Theme.VLC"
             android:windowSoftInputMode="adjustResize"/>
@@ -1062,18 +1064,6 @@
                 android:foregroundServiceType="mediaPlayback">
             <intent-filter>
                 <action android:name="android.media.browse.MediaBrowserService"/>
-            </intent-filter>
-        </service>
-
-        <service
-            android:name=".car.VLCCarService"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="androidx.car.app.CarAppService" />
-                <category android:name="androidx.car.app.category.SETTINGS"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="${applicationId}.car.SETTINGS" />
             </intent-filter>
         </service>
 

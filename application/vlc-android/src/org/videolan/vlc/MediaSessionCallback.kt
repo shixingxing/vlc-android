@@ -34,6 +34,7 @@ import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
 import android.view.KeyEvent
 import androidx.core.content.edit
+import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
@@ -53,6 +54,7 @@ import org.videolan.resources.EXTRA_RELATIVE_MEDIA_ID
 import org.videolan.resources.MEDIALIBRARY_PAGE_SIZE
 import org.videolan.resources.util.getFromMl
 import org.videolan.resources.util.parcelable
+import org.videolan.tools.KEY_IGNORE_HEADSET_MEDIA_BUTTON_PRESSES
 import org.videolan.tools.KEY_PLAYBACK_SPEED_AUDIO_GLOBAL
 import org.videolan.tools.KEY_PLAYBACK_SPEED_AUDIO_GLOBAL_VALUE
 import org.videolan.tools.Settings
@@ -85,7 +87,7 @@ internal class MediaSessionCallback(private val playbackService: PlaybackService
         val keyEvent = mediaButtonEvent.parcelable(Intent.EXTRA_KEY_EVENT) as KeyEvent? ?: return false
 
         if (playbackService.detectHeadset &&
-            playbackService.settings.getBoolean("ignore_headset_media_button_presses", false)) {
+            playbackService.settings.getBoolean(KEY_IGNORE_HEADSET_MEDIA_BUTTON_PRESSES, false)) {
             // Wired headset
             if (playbackService.headsetInserted && isWiredHeadsetHardKey(keyEvent)) {
                 return true
@@ -271,7 +273,7 @@ internal class MediaSessionCallback(private val playbackService: PlaybackService
         playbackService.lifecycleScope.launch {
             val context = playbackService.applicationContext
             try {
-                val mediaIdUri = Uri.parse(extras?.getString(EXTRA_RELATIVE_MEDIA_ID) ?: mediaId)
+                val mediaIdUri = (extras?.getString(EXTRA_RELATIVE_MEDIA_ID) ?: mediaId).toUri()
                 val position = mediaIdUri.getQueryParameter("i")?.toInt() ?: 0
                 val page = mediaIdUri.getQueryParameter("p")
                 val pageOffset = page?.toInt()?.times(MediaSessionBrowser.MAX_RESULT_SIZE) ?: 0

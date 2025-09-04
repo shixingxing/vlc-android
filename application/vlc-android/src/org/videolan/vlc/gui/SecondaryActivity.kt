@@ -28,9 +28,15 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
+import androidx.activity.enableEdgeToEdge
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.os.bundleOf
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.AppBarLayout
@@ -52,6 +58,7 @@ import org.videolan.vlc.R
 import org.videolan.vlc.gui.audio.AudioAlbumsSongsFragment
 import org.videolan.vlc.gui.audio.AudioBrowserFragment
 import org.videolan.vlc.gui.browser.FileBrowserFragment
+import org.videolan.vlc.gui.browser.KEY_JUMP_TO
 import org.videolan.vlc.gui.browser.KEY_MEDIA
 import org.videolan.vlc.gui.browser.MLStorageBrowserFragment
 import org.videolan.vlc.gui.browser.NetworkBrowserFragment
@@ -80,7 +87,21 @@ class SecondaryActivity : ContentActivity(), IDialogManager {
         else null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById<View>(android.R.id.content)) { v, windowInsets ->
+            val bars = windowInsets.getInsets(
+                WindowInsetsCompat.Type.systemBars()
+                        or WindowInsetsCompat.Type.displayCutout()
+            )
+            v.updatePadding(
+                left = bars.left,
+                top = bars.top,
+                right = bars.right,
+                bottom = bars.bottom,
+            )
+            WindowInsetsCompat.CONSUMED
+        }
         setContentView(R.layout.secondary)
         initAudioPlayerContainerActivity()
 
@@ -202,7 +223,7 @@ class SecondaryActivity : ContentActivity(), IDialogManager {
                 (intent.parcelable(KEY_MEDIA) as? MediaWrapper)?.let { media ->
                     fragment = if (media.uri.scheme.isSchemeNetwork()) NetworkBrowserFragment()
                     else FileBrowserFragment()
-                    fragment?.apply { arguments = bundleOf(KEY_MEDIA to media) }
+                    fragment?.apply { arguments = bundleOf(KEY_MEDIA to media, KEY_JUMP_TO to intent.parcelable(KEY_JUMP_TO)) }
                 }
             }
             else -> throw IllegalArgumentException("Wrong fragment id.")

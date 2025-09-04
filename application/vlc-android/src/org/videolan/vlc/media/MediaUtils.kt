@@ -12,6 +12,7 @@ import androidx.annotation.WorkerThread
 import androidx.appcompat.app.AppCompatActivity
 import androidx.collection.SimpleArrayMap
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
@@ -294,7 +295,9 @@ object MediaUtils {
     fun openList(context: Context?, list: List<MediaWrapper>, position: Int, shuffle: Boolean = false) {
         if (list.isEmpty() || context == null) return
         SuspendDialogCallback(context) { service ->
-            service.load(list, position)
+            val realPos = if (shuffle) SecureRandom().nextInt(list.size)
+            else position
+            service.load(list, realPos)
             if (shuffle && !service.isShuffling) service.shuffle()
         }
     }
@@ -313,13 +316,6 @@ object MediaUtils {
         if (uri == null || context == null) return
         SuspendDialogCallback(context) { service ->
             service.loadUri(uri)
-        }
-    }
-
-    fun openStream(context: Context?, uri: String?) {
-        if (uri == null || context == null) return
-        SuspendDialogCallback(context) { service ->
-            service.loadLocation(uri)
         }
     }
 
@@ -532,14 +528,14 @@ object MediaUtils {
 
 fun Folder.isOTG(): Boolean {
     try {
-        return Uri.parse(mMrl).isOTG()
+        return mMrl.toUri().isOTG()
     } catch (_: Exception) {
     }
     return false
 }
 fun Folder.isSD(): Boolean {
     try {
-        return Uri.parse(mMrl).isSD()
+        return mMrl.toUri().isSD()
     } catch (_: Exception) {
     }
     return false
@@ -611,17 +607,6 @@ fun List<MediaLibraryItem>.getAll(sort: Int = Medialibrary.SORT_DEFAULT, desc: B
 
 fun List<Folder>.getAll(type: Int = Folder.TYPE_FOLDER_VIDEO, sort: Int = Medialibrary.SORT_DEFAULT, desc: Boolean = false, onlyFavorites:Boolean = false) = flatMap {
     it.getAll(type, sort, desc, onlyFavorites)
-}
-
-private fun Array<MediaLibraryItem>.toList() = flatMap {
-    if (it is VideoGroup) {
-        it.media(Medialibrary.SORT_DEFAULT, false, true, false, it.mediaCount(), 0).toList()
-    } else listOf(it as MediaWrapper)
-}
-
-fun MediaContentResolver.canHandle(id: String) : Boolean {
-    for (i in 0 until size()) if (id.startsWith(keyAt(i))) return true
-    return false
 }
 
 suspend fun MediaContentResolver.getList(context: Context, id: String) : ResumableList {

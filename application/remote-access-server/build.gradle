@@ -4,17 +4,14 @@ plugins {
 }
 
 android {
-    namespace 'org.videolan.vlc.remoteaccessserver'
+    namespace = 'org.videolan.vlc.remoteaccessserver'
 
     dataBinding {
         enabled = true
     }
 
     defaultConfig {
-        multiDexEnabled true
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
-        compileSdk rootProject.ext.compileSdkVersion
+        multiDexEnabled = true
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -46,7 +43,7 @@ android {
     }
 
     compileOptions {
-        coreLibraryDesugaringEnabled true
+        coreLibraryDesugaringEnabled = true
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
@@ -54,7 +51,7 @@ android {
         jvmTarget = '1.8'
     }
     buildFeatures {
-        buildConfig true
+        buildConfig = true
     }
 
 }

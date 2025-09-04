@@ -1,7 +1,6 @@
 package org.videolan.vlc.media
 
 import android.content.Intent
-import android.net.Uri
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.Log
 import android.widget.Toast
@@ -33,15 +32,6 @@ import org.videolan.medialibrary.interfaces.media.MediaWrapper
 import org.videolan.resources.AndroidDevices
 import org.videolan.resources.AppContextProvider
 import org.videolan.resources.EXIT_PLAYER
-import org.videolan.resources.KEY_AUDIO_LAST_PLAYLIST
-import org.videolan.resources.KEY_CURRENT_AUDIO
-import org.videolan.resources.KEY_CURRENT_AUDIO_RESUME_ARTIST
-import org.videolan.resources.KEY_CURRENT_AUDIO_RESUME_THUMB
-import org.videolan.resources.KEY_CURRENT_AUDIO_RESUME_TITLE
-import org.videolan.resources.KEY_CURRENT_MEDIA
-import org.videolan.resources.KEY_CURRENT_MEDIA_RESUME
-import org.videolan.resources.KEY_MEDIA_LAST_PLAYLIST
-import org.videolan.resources.KEY_MEDIA_LAST_PLAYLIST_RESUME
 import org.videolan.resources.PLAYLIST_TYPE_AUDIO
 import org.videolan.resources.PLAYLIST_TYPE_VIDEO
 import org.videolan.resources.PLAY_FROM_SERVICE
@@ -55,15 +45,26 @@ import org.videolan.tools.AUDIO_STOP_AFTER
 import org.videolan.tools.AppScope
 import org.videolan.tools.DAV1D_THREAD_NUMBER
 import org.videolan.tools.HTTP_USER_AGENT
+import org.videolan.tools.KEY_ALWAYS_FAST_SEEK
 import org.videolan.tools.KEY_AUDIO_CONFIRM_RESUME
 import org.videolan.tools.KEY_AUDIO_FORCE_SHUFFLE
+import org.videolan.tools.KEY_AUDIO_LAST_PLAYLIST
+import org.videolan.tools.KEY_CURRENT_AUDIO
+import org.videolan.tools.KEY_CURRENT_AUDIO_RESUME_ARTIST
+import org.videolan.tools.KEY_CURRENT_AUDIO_RESUME_THUMB
+import org.videolan.tools.KEY_CURRENT_AUDIO_RESUME_TITLE
+import org.videolan.tools.KEY_CURRENT_MEDIA
+import org.videolan.tools.KEY_CURRENT_MEDIA_RESUME
 import org.videolan.tools.KEY_INCOGNITO
 import org.videolan.tools.KEY_INCOGNITO_PLAYBACK_SPEED_AUDIO_GLOBAL_VALUE
 import org.videolan.tools.KEY_INCOGNITO_PLAYBACK_SPEED_VIDEO_GLOBAL_VALUE
+import org.videolan.tools.KEY_MEDIA_LAST_PLAYLIST
+import org.videolan.tools.KEY_MEDIA_LAST_PLAYLIST_RESUME
 import org.videolan.tools.KEY_PLAYBACK_SPEED_AUDIO_GLOBAL
 import org.videolan.tools.KEY_PLAYBACK_SPEED_AUDIO_GLOBAL_VALUE
 import org.videolan.tools.KEY_PLAYBACK_SPEED_VIDEO_GLOBAL
 import org.videolan.tools.KEY_PLAYBACK_SPEED_VIDEO_GLOBAL_VALUE
+import org.videolan.tools.KEY_SAVE_INDIVIDUAL_AUDIO_DELAY
 import org.videolan.tools.KEY_VIDEO_APP_SWITCH
 import org.videolan.tools.KEY_VIDEO_CONFIRM_RESUME
 import org.videolan.tools.MEDIA_SHUFFLING
@@ -120,6 +121,7 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
         private val mediaList = MediaWrapperList()
         fun hasMedia() = mediaList.size() != 0
         val repeating = MutableStateFlow(PlaybackStateCompat.REPEAT_MODE_NONE)
+        val shuffling = MutableStateFlow(false)
         var playingAsAudio = false
     }
 
@@ -136,7 +138,13 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
     private var prevIndex = -1
     private var previous = Stack<Int>()
     var stopAfter = -1
-    var shuffling = false
+    var shuffling: Boolean = false
+        set(value) {
+            field = value
+            AppScope.launch {
+                PlaylistManager.shuffling.emit(value)
+            }
+        }
     var videoBackground = false
         private set
     var isBenchmark = false
@@ -212,7 +220,7 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
                     if (mediaWrapper === null) {
                         if (!location.validateLocation()) {
                             Log.w(TAG, "Invalid location $location")
-                            service.showToast(if (Uri.parse(location).scheme == "missing")service.resources.getString(R.string.missing_location) else service.resources.getString(R.string.invalid_location,  location), Toast.LENGTH_SHORT)
+                            service.showToast(if (location.toUri().scheme == "missing")service.resources.getString(R.string.missing_location) else service.resources.getString(R.string.invalid_location,  location), Toast.LENGTH_SHORT)
                             continue
                         }
                         Log.v(TAG, "Creating on-the-fly Media object for $location")
@@ -657,7 +665,6 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
         val time = player.mediaplayer.time
         val length = player.getLength()
         val canSwitchToVideo = player.canSwitchToVideo()
-        val rate = player.getRate()
         launch(Dispatchers.IO) innerLaunch@ {
             val media = if (entryUrl != null) medialibrary.getMedia(entryUrl) else medialibrary.findMedia(currentMedia) ?: return@innerLaunch
             if (showAudioPlayer.value != true) BaseBrowserFragment.needRefresh.postValue(true)
@@ -710,7 +717,7 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
     fun setAudioDelay(delay: Long) {
         if (!player.setAudioDelay(delay)) return
         val media = getCurrentMedia() ?: return
-        if (media.id != 0L && settings.getBoolean("save_individual_audio_delay", true)) {
+        if (media.id != 0L && settings.getBoolean(KEY_SAVE_INDIVIDUAL_AUDIO_DELAY, true)) {
             launch(Dispatchers.IO) { media.setLongMeta(MediaWrapper.META_AUDIODELAY, player.getAudioDelay()) }
         }
     }
@@ -727,7 +734,7 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
             val globalDelay = Settings.getInstance(AppContextProvider.appContext).getLong(AUDIO_DELAY_GLOBAL, 0L)
             if (savedDelay == 0L && globalDelay != 0L) {
                 player.setAudioDelay(globalDelay)
-            } else if (settings.getBoolean("save_individual_audio_delay", true)) {
+            } else if (settings.getBoolean(KEY_SAVE_INDIVIDUAL_AUDIO_DELAY, true)) {
                 player.setAudioDelay(savedDelay)
             }
             val abStart = if (settings.getBoolean(PLAYBACK_HISTORY, true))  media.getMetaLong(MediaWrapper.META_AB_REPEAT_START) else 0L
@@ -747,7 +754,7 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
      *
      * @param media
      */
-    private fun restoreSpeed(media: MediaWrapper) {
+    fun restoreSpeed(media: MediaWrapper) {
         val incognitoMode = settings.getBoolean(KEY_INCOGNITO, false)
         val playbackSpeedModeAll = settings.getBoolean(if (player.isVideoPlaying()) KEY_PLAYBACK_SPEED_VIDEO_GLOBAL else KEY_PLAYBACK_SPEED_AUDIO_GLOBAL, false)
         val playbackRate = when {
@@ -1222,13 +1229,13 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
                     }
                     Log.w(TAG, "Invalid location $location")
 
-                    service.showToast(if (location != null && Uri.parse(location).scheme == "missing") service.getString(R.string.missing_location) else service.getString(R.string.invalid_location, location
+                    service.showToast(if (location != null && location.toUri().scheme == "missing") service.getString(R.string.missing_location) else service.getString(R.string.invalid_location, location
                             ?: ""), Toast.LENGTH_SHORT, true)
                     if (currentIndex != nextIndex) next() else stop()
                 }
                 MediaPlayer.Event.TimeChanged -> {
                     abRepeat.value?.let {
-                        val fastSeek = settings.getBoolean("always_fast_seek", false)
+                        val fastSeek = settings.getBoolean(KEY_ALWAYS_FAST_SEEK, false)
                         if (it.stop != -1L && player.getCurrentTime() > it.stop) service.setTime(it.start, false)
                         if ((fastSeek && player.getCurrentTime() < it.start - 30000L)
                             || (!fastSeek && player.getCurrentTime() < it.start))

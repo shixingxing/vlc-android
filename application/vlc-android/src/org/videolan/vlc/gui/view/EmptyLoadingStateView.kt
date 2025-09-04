@@ -29,29 +29,28 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.util.AttributeSet
 import android.util.Log
-import android.view.Gravity
 import android.view.LayoutInflater
-import android.view.View
-import android.widget.*
+import android.widget.Button
+import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.TextView
+import android.widget.ViewFlipper
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.app.ActivityCompat
+import androidx.core.net.toUri
 import androidx.fragment.app.FragmentActivity
 import androidx.transition.TransitionManager
-import kotlinx.coroutines.launch
 import org.videolan.resources.ACTIVITY_RESULT_PREFERENCES
-import org.videolan.tools.AppScope
 import org.videolan.tools.dp
 import org.videolan.vlc.R
 import org.videolan.vlc.gui.BaseActivity
 import org.videolan.vlc.gui.SecondaryActivity
 import org.videolan.vlc.gui.helpers.getBitmapFromDrawable
 import org.videolan.vlc.gui.helpers.hf.StoragePermissionsDelegate.Companion.askStoragePermission
-import org.videolan.vlc.gui.helpers.hf.StoragePermissionsDelegate.Companion.getStoragePermission
 import org.videolan.vlc.util.Permissions
 
 class EmptyLoadingStateView : FrameLayout {
@@ -80,16 +79,16 @@ class EmptyLoadingStateView : FrameLayout {
         set(value) {
             compactMode = value  in arrayOf(EmptyLoadingState.EMPTY_SEARCH, EmptyLoadingState.EMPTY, EmptyLoadingState.EMPTY_FAVORITES)
             applyCompactMode()
-            loadingFlipper.visibility = if (value == EmptyLoadingState.LOADING) View.VISIBLE else View.GONE
-            loadingTitle.visibility = if (value == EmptyLoadingState.LOADING) View.VISIBLE else View.GONE
-            emptyTextView.visibility = if (value in arrayOf(EmptyLoadingState.EMPTY, EmptyLoadingState.EMPTY_SEARCH, EmptyLoadingState.EMPTY_FAVORITES)) View.VISIBLE else View.GONE
-            emptyImageView.visibility = if (value in arrayOf(EmptyLoadingState.EMPTY,EmptyLoadingState.MISSING_PERMISSION,EmptyLoadingState.MISSING_VIDEO_PERMISSION, EmptyLoadingState.MISSING_AUDIO_PERMISSION, EmptyLoadingState.EMPTY_SEARCH, EmptyLoadingState.EMPTY_FAVORITES)) View.VISIBLE else View.GONE
+            loadingFlipper.visibility = if (value == EmptyLoadingState.LOADING) VISIBLE else GONE
+            loadingTitle.visibility = if (value == EmptyLoadingState.LOADING) VISIBLE else GONE
+            emptyTextView.visibility = if (value in arrayOf(EmptyLoadingState.EMPTY, EmptyLoadingState.EMPTY_SEARCH, EmptyLoadingState.EMPTY_FAVORITES)) VISIBLE else GONE
+            emptyImageView.visibility = if (value in arrayOf(EmptyLoadingState.EMPTY,EmptyLoadingState.MISSING_PERMISSION,EmptyLoadingState.MISSING_VIDEO_PERMISSION, EmptyLoadingState.MISSING_AUDIO_PERMISSION, EmptyLoadingState.EMPTY_SEARCH, EmptyLoadingState.EMPTY_FAVORITES)) VISIBLE else GONE
             emptyImageView.setImageBitmap(context.getBitmapFromDrawable(if (value == EmptyLoadingState.EMPTY_FAVORITES) R.drawable.ic_fav_empty else if (value in arrayOf(EmptyLoadingState.EMPTY, EmptyLoadingState.EMPTY_SEARCH, EmptyLoadingState.EMPTY_FAVORITES)) R.drawable.ic_empty else R.drawable.ic_empty_warning))
-            permissionTitle.visibility = if (value in arrayOf(EmptyLoadingState.MISSING_PERMISSION, EmptyLoadingState.MISSING_VIDEO_PERMISSION, EmptyLoadingState.MISSING_AUDIO_PERMISSION)) View.VISIBLE else View.GONE
-            permissionTextView.visibility = if (value in arrayOf(EmptyLoadingState.MISSING_PERMISSION, EmptyLoadingState.MISSING_VIDEO_PERMISSION, EmptyLoadingState.MISSING_AUDIO_PERMISSION)) View.VISIBLE else View.GONE
-            grantPermissionButton.visibility = if (value in arrayOf(EmptyLoadingState.MISSING_PERMISSION, EmptyLoadingState.MISSING_VIDEO_PERMISSION, EmptyLoadingState.MISSING_AUDIO_PERMISSION)) View.VISIBLE else View.GONE
-            pickFileButton.visibility = if (value in arrayOf(EmptyLoadingState.MISSING_PERMISSION, EmptyLoadingState.MISSING_VIDEO_PERMISSION, EmptyLoadingState.MISSING_AUDIO_PERMISSION) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) View.VISIBLE else View.GONE
-            noMediaButton.visibility = if (showNoMedia && value == EmptyLoadingState.EMPTY) View.VISIBLE else if (value == EmptyLoadingState.EMPTY_FAVORITES) View.INVISIBLE else  View.GONE
+            permissionTitle.visibility = if (value in arrayOf(EmptyLoadingState.MISSING_PERMISSION, EmptyLoadingState.MISSING_VIDEO_PERMISSION, EmptyLoadingState.MISSING_AUDIO_PERMISSION)) VISIBLE else GONE
+            permissionTextView.visibility = if (value in arrayOf(EmptyLoadingState.MISSING_PERMISSION, EmptyLoadingState.MISSING_VIDEO_PERMISSION, EmptyLoadingState.MISSING_AUDIO_PERMISSION)) VISIBLE else GONE
+            grantPermissionButton.visibility = if (value in arrayOf(EmptyLoadingState.MISSING_PERMISSION, EmptyLoadingState.MISSING_VIDEO_PERMISSION, EmptyLoadingState.MISSING_AUDIO_PERMISSION)) VISIBLE else GONE
+            pickFileButton.visibility = if (value in arrayOf(EmptyLoadingState.MISSING_PERMISSION, EmptyLoadingState.MISSING_VIDEO_PERMISSION, EmptyLoadingState.MISSING_AUDIO_PERMISSION) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) VISIBLE else GONE
+            noMediaButton.visibility = if (showNoMedia && value == EmptyLoadingState.EMPTY) VISIBLE else if (value == EmptyLoadingState.EMPTY_FAVORITES) INVISIBLE else GONE
             permissionTextView.text = when (state) {
                 EmptyLoadingState.MISSING_VIDEO_PERMISSION -> context.getString(R.string.permission_video)
                 EmptyLoadingState.MISSING_AUDIO_PERMISSION -> context.getString(R.string.permission_audio)
@@ -178,7 +177,7 @@ class EmptyLoadingStateView : FrameLayout {
         }
         pickFileButton.setOnClickListener {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                (context as BaseActivity).openFile(Uri.parse(""))
+                (context as BaseActivity).openFile("".toUri())
             }
         }
         container = findViewById(R.id.container)

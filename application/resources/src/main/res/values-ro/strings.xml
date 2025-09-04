@@ -67,7 +67,17 @@
     <string name="set_song_question">Setare \'%1$s\' ca ton de apel?</string>
     <string name="info">Informații</string>
     <string name="confirm_delete">Ștergeți fișierul \'%1$s\'?</string>
+    <string name="equalizer_overwrite_warning">Egalizatorul există deja</string>
+    <string name="overwrite">Suprascrie-l</string>
+    <string name="eq_cannot_overwrite">Nu se poate suprascrie egalizatorul implicit</string>
+    <string name="equalizer_name">Numele egalizatorului</string>
+    <string name="equalizer_deleted">Egalizatorul a fost șters</string>
+    <string name="equalizer_leave_warning">Vei părăsi playerul video</string>
+    <string name="invalid_equalizer_file">Fișierulk de egalizatoare e nevalid</string>
+    <string name="confirm_delete_eq">Ești sigur(ă) că vrei să ștergi această presetare?</string>
+    <string name="confirm_delete_vlc_eq">Ești sigur(ă) că vrei să ștergi această presetare?\nO poți restaura din setările egalizatorului.</string>
     <string name="confirm_replace_playlist">Ești sigur(ă) că vrei să înlocuiești lista de redare/playlist-ul \'%1$ss\'?</string>
+    <string name="invalid_settings_file">Fișier de setări nevalid</string>
     <string name="confirm_delete_message">Aceasta actiune este permanenta si nu poate fi anulata</string>
     <string name="confirm_delete_album">Ștergi albumul \'%1$s\'?</string>
     <string name="confirm_delete_several_media">Ștergeți  %1$d fișiere media?</string>
@@ -141,6 +151,14 @@
     <string name="video">Video</string>
     <string name="bookmarks">Marcaje</string>
     <string name="equalizer">Egalizator</string>
+    <string name="import_equalizer">Importă egalizatorul</string>
+    <string name="equalizer_exported">Egalizatorul exportat (Egalizatoarele exportate) în %s</string>
+    <string name="equalizer_copy_template">(copiază %s)</string>
+    <string name="new_equalizer_copy_template">Egalizatorul nou %s</string>
+    <string name="show_all">Afișează-le pe toate</string>
+    <string name="hide_all">Ascunde-le pe toate</string>
+    <string name="export_all">Exportă-le pe toate</string>
+    <string name="import_all">Importă-le pe toate</string>
     <string name="all_albums">Toate albumele</string>
     <string name="genres">Genuri</string>
     <string name="playlists">Liste de redare</string>
@@ -247,8 +265,6 @@
 
     <string name="streams">Fluxuri</string>
     <string name="open_mrl_dialog_msg">Adaugă adresa de rețea: de exemplu http://, mms:// sau rtsp://</string>
-    <string name="encountered_error_title">Eroare de redare</string>
-    <string name="encountered_error_message">VLC a întâmpinat o eroare cu acest suport. \ nÎncercați să reîmprospătați biblioteca media.</string>
     <string name="invalid_location">Locaţia %1$s nu poate fi redată.</string>
     <string name="missing_location">Locația nu poate fi găsită.</string>
 
@@ -331,6 +347,8 @@
     <string name="add_custom_path_description">Introduceţi un alt dosar pentru a fi scanat:</string>
     <string name="remove_custom_path">Eliminare cale personalizată</string>
     <string name="group_ban_folder">Interzice folderul din biblioteca media</string>
+    <string name="ban_folder">Interzice folderul (dosarul)</string>
+    <string name="ban_folder_explanation">Interzicerea acestui folder (dosar) înseamnă că nu vei vedea fișierele media din secțiunea video sau audio a aplicației, deși acestea vor fi în continuare accesibile din navigator.\nPentru a-l reactiva, accesează setările %s și atinge lung acest folder (dosar).</string>
 
     <string name="hardware_acceleration">Accelerare hardware</string>
     <string name="hardware_acceleration_summary">Dezactivat: o mai bună stabilitate\nDecodare: poate îmbunătăți performanța\nComplet: poate îmbunătăți și mai mult performanța.</string>
@@ -635,6 +653,8 @@
     <string name="network_shares_discovery">Caut rețele partajate</string>
     <string name="network_empty">Acest director este gol.</string>
     <string name="network_connection_needed">Nu există nicio conexiune la rețeaua locală.</string>
+    <string name="network_disabled">Navigarea în rețea e dezactivată</string>
+    <string name="browse_network">Navighează în rețea</string>
     <string name="search_hint">Cautare media</string>
     <string name="search_in_list_hint">Căutare în lista curentă</string>
     <string name="search_global">Caută în toate bibliotecile media</string>
@@ -655,8 +675,9 @@
 
     <!--What's new-->
     <string name="whats_new_title">Ce e nou în VLC pentru Android %s</string>
-    <string name="whats_new_36_webserver_text">Cu această nouă funcție de acces la distanță, preia controlul lui VLC pentru Android de pe orice al dispozitiv.\nTrimite-ți fișierele media în ambele direcții, controlează-ți lista de redare și multe altele!</string>
-    <string name="whats_new_36_favorites_text">De acum îți poți adăuga fișierele media, listele de redare, artiștii și albumele la favorite.\nGăsește-ți conținutul preferat dintr-o privire prin filtrarea conținutului numai după favorite!</string>
+    <string name="whats_new_37_equalizer_text">Egalizatorul a fost refăcut de la zero. Este mai ușor de utilizat, îți permite să dezactivezi presetările implicite și îți permite să-ți faci backup (copie de rezervă), să îți restaurezi și să îți partajezi presetările.</string>
+    <string name="whats_new_37_import_export">Am îmbunătățit funcția de backup (de copie de rezervă) și restaurare a setărilor. Acum îți permite să faci backup (copie de rezervă) la mai multe setări, inclusiv la presetările egalizatorului.</string>
+    <string name="show_in_settings">Afișează în setări</string>
 
 <!--    update-->
     <string name="update_title">O actualizare disponibilă</string>
@@ -899,7 +920,6 @@
     <string name="eq_snap_bands">Benzile de fixare</string>
     <string name="enable_equalizer">Activează</string>
     <string name="preamp">Preamplificator</string>
-    <string name="presets">Setări predefinite</string>
     <string name="reset">Resetează</string>
     <plurals name="tracks_inserted">
         <item quantity="one">%d pistă inserată</item>
@@ -1135,6 +1155,11 @@
     <string name="move_down">Mută jos</string>
     <string name="remove_from_playlist">Șterge din lista de redare</string>
     <string name="play_media">Redă%s</string>
+    <string name="edit_eq_preset">Editează presetarea egalizatorului</string>
+    <string name="edit_eq_name_not_allowed">Acest nume nu e permis</string>
+    <string name="export_equalizer">Exportă egalizatorul</string>
+    <string name="hide_equalizer">Ascunde egalizatorul</string>
+    <string name="show_equalizer">Afișează egalizatorul</string>
 
     <!-- Duplication Warning Dialog -->
     <string name="message_primary_default">Adăugați element(e) duplicate?</string>
@@ -1300,6 +1325,7 @@
     <string name="ra_prepare_download">Se pregătește descărcarea ta</string>
     <string name="ra_forbidden">Conținutul e dezactivat din setări</string>
     <string name="ra_playback_forbidden">Controlul de redare e dezactivat din setări</string>
+    <string name="ra_logs_forbidden">Partajarea jurnalelor este dezactivată în setări</string>
     <string name="ra_code_requested_explanation">Pentru a-ți proteja serverul accesul e protejat.\nTe rugăm să introduci codul afișat în notificările tale</string>
     <string name="ra_ssl_explanation_title">Desecurizează conexiunea</string>
     <string name="ra_ssl_explanation">Conexiunea ta nu e sigură.</string>
@@ -1361,6 +1387,7 @@
     <string name="export_settings">Exportă setările</string>
     <string name="restore_settings_summary">Restaurează-ți setările dintr-un export anterior</string>
     <string name="restore_settings">Restaurează setările</string>
+    <string name="obsolete_restore_settings">Exportul setărilor tale este învechit. Te rugăm să le exporți din nou.</string>
     <string name="export_settings_success">Setările au fost exportate cu succes în rădăcina de stocare internă</string>
     <string name="export_settings_failure">Ceva a mers greșit în timpul exportării setărilor tale</string>
 
@@ -1390,4 +1417,13 @@
     <string name="generating_logs">Se generează jurnalele. Te rugăm să aștepți.</string>
     <string name="default_playback_action">Acțiune de redare</string>
     <string name="files">Fișiere</string>
-</resources>
+    <string name="remote_access_feedback_generate">Generează un raport</string>
+    <string name="remote_access_feedback_generated">Raportul tău de feedback a fost generat</string>
+    <string name="remote_access_feedback_generated_explanation">Atinge butonul de mai jos pentru a-l trimite folosindu-ți clientul de e-mail implicit. Dacă întâmpini probleme, poți copia și lipi câmpurile de mai jos și îți poți trimite ție e-mailul.</string>
+    <string name="remote_access_feedback_file_explanation">Tocmai ai descărcat fișierul necesar. Te rugăm să nu uiți să îl atașezi la adresa ta de e-mail.</string>
+    <string name="generic_copied_to_clipboard">Copiat(ă) în clipboard</string>
+    <string name="feedback_email_warning">Nu e instalat niciun client email</string>
+    <string name="feedback_email_warning_explanation">Cea mai ușoară modalitate de a-ți oferi feedbac-ulk este să utilizați funcția %1$s.\nPentru a face acest lucru, activează accesul de la distanță în setări, urmează instrucțiunile și selectează intrarea %2$s din meniu.</string>
+    <string name="feedback_email_warning_remote_action">Deschide setările</string>
+    <string name="feedback_email_warning_try_anyway">Încearcă oricum</string>
+    </resources>

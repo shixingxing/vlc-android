@@ -40,13 +40,9 @@ android {
 
 
     defaultConfig {
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
-        compileSdk rootProject.ext.compileSdkVersion
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
-        multiDexEnabled true
+        multiDexEnabled = true
         buildConfigField "String", "PUBLIC_API_KEY", "\"${getPublicApiKey(project)}\""
     }
 
@@ -67,10 +63,10 @@ android {
             matchingFallbacks = ['release']
         }
     }
-    namespace 'org.videolan.vlc.donations'
+    namespace = 'org.videolan.vlc.donations'
     buildFeatures {
-        aidl true
-        buildConfig true
+        aidl = true
+        buildConfig = true
     }
 }
 

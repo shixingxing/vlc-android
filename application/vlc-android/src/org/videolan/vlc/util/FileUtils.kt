@@ -35,7 +35,8 @@ import android.util.Log
 import androidx.annotation.WorkerThread
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.videolan.libvlc.util.AndroidUtil
 import org.videolan.medialibrary.Tools
 import org.videolan.medialibrary.interfaces.Medialibrary
@@ -43,14 +44,29 @@ import org.videolan.medialibrary.interfaces.media.MediaWrapper
 import org.videolan.resources.AndroidDevices
 import org.videolan.resources.AppContextProvider
 import org.videolan.resources.util.isExternalStorageManager
-import org.videolan.tools.*
+import org.videolan.tools.AppScope
+import org.videolan.tools.CloseableUtils
+import org.videolan.tools.Settings
+import org.videolan.tools.addTrailingSlashIfNeeded
+import org.videolan.tools.removeFileScheme
+import org.videolan.tools.runIO
 import org.videolan.vlc.BuildConfig
 import org.videolan.vlc.R
 import org.videolan.vlc.VlcMigrationHelper
 import org.videolan.vlc.media.MediaUtils
-import java.io.*
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
+import java.io.BufferedReader
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
+import java.io.OutputStream
 import java.lang.Runnable
-import java.util.*
 import java.util.zip.CRC32
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -259,7 +275,7 @@ object FileUtils {
     }
 
     @WorkerThread
-    fun deleteFile(path: String?) = path?.let { deleteFile(File(it)) } ?: false
+    fun deleteFile(path: String?) = path?.let { deleteFile(File(it)) } == true
 
     @WorkerThread
     fun deleteFile(file: File): Boolean {
@@ -285,14 +301,9 @@ object FileUtils {
         return deleted
     }
 
-    fun String.isInternalStorage() = startsWith(AndroidDevices.EXTERNAL_PUBLIC_DIRECTORY)
 
     private fun asyncRecursiveDelete(path: String, callback: Callback?) {
         asyncRecursiveDelete(File(path), callback)
-    }
-
-    fun asyncRecursiveDelete(path: String) {
-        asyncRecursiveDelete(path, null)
     }
 
     private fun asyncRecursiveDelete(fileOrDirectory: File, callback: Callback?) {
@@ -425,9 +436,9 @@ object FileUtils {
                         CloseableUtils.close(cursor)
                     }
                 } else if (data.host == "com.amaze.filemanager" && data.path != null) {
-                    uri = Uri.parse(data.path!!.replace("/storage_root", "file://"))
-                    uri?.let {
-                        if (it.path != null && !File(it.path).canRead())
+                    uri = data.path!!.replace("/storage_root", "file://").toUri()
+                    uri.let {
+                        if (it.path != null && !File(it.path!!).canRead())
                             uri = getFileDescriptorFromUri(data)
                     }
                 } else if (data.authority == "media") {
@@ -612,9 +623,9 @@ fun Uri?.isSoundFont():Boolean {
     return false
 }
 
-fun Uri?.isSettings():Boolean {
+fun Uri?.isSettingsOrEq():Boolean {
     this?.lastPathSegment?.lowercase()?.let { lastPathSegment ->
-        if (BuildConfig.DEBUG) Log.d("FilePicker", "Uri: $this -> ${lastPathSegment}")
+        if (BuildConfig.DEBUG) Log.d("FilePicker", "Uri: $this -> $lastPathSegment")
         if (lastPathSegment.lowercase().endsWith(".json")) return true
     }
     return false

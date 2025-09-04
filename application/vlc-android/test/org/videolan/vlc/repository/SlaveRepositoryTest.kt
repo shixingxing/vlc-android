@@ -30,8 +30,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.ArgumentMatchers.anyString
-import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
 import org.powermock.api.mockito.PowerMockito
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
@@ -64,14 +64,14 @@ class SlaveRepositoryTest {
         val fakeSlave = TestUtil.createSubtitleSlavesForMedia("foo.mkv", 1)[0]
         slaveRepository.saveSlave(fakeSlave.mediaPath, fakeSlave.type, fakeSlave.priority, fakeSlave.uri)
 
-        val inserted = argumentCaptor<org.videolan.vlc.mediadb.models.Slave>()
+        val inserted = argumentCaptor<Slave>()
         verify(slaveDao).insert(inserted.capture() ?: uninitialized())
         assertThat(inserted.value, `is`(fakeSlave))
 
         PowerMockito.mockStatic(Uri::class.java)
         PowerMockito.`when`<Any>(Uri::class.java, "decode", anyString()).thenAnswer { it.arguments[0] as String }
 
-        `when`(slaveDao.get(fakeSlave.mediaPath)).thenReturn(listOf(fakeSlave))
+        `when`(slaveDao[fakeSlave.mediaPath]).thenReturn(listOf(fakeSlave))
 
         val slave = slaveRepository.getSlaves(fakeSlave.mediaPath)[0]
         assertThat(slave.uri, `is`(fakeSlave.uri))

@@ -67,7 +67,17 @@
     <string name="set_song_question">Définir « %1$s » comme sonnerie ?</string>
     <string name="info">Information</string>
     <string name="confirm_delete">Supprimer le fichier  « %1$s » ?</string>
+    <string name="equalizer_overwrite_warning">Cet égaliseur existe déjà</string>
+    <string name="overwrite">Écraser</string>
+    <string name="eq_cannot_overwrite">Impossible d’écraser l’égaliseur par défaut</string>
+    <string name="equalizer_name">Nom de l’égaliseur</string>
+    <string name="equalizer_deleted">L’égaliseur a été supprimé</string>
+    <string name="equalizer_leave_warning">Vous allez quitter le lecteur vidéo</string>
+    <string name="invalid_equalizer_file">Fichier égaliseur invalide</string>
+    <string name="confirm_delete_eq">Êtes-vous sûr de vouloir supprimer ce préréglage ?</string>
+    <string name="confirm_delete_vlc_eq">Êtes-vous sûr de vouloir masquer ce préréglage ?\nVous pouvez le restaurer dans les paramètres de l’égaliseur.</string>
     <string name="confirm_replace_playlist">Voulez-vous vraiment remplacer la liste de lecture « %1$s » ?</string>
+    <string name="invalid_settings_file">Fichier de paramètres invalide</string>
     <string name="confirm_delete_message">Cette décision est permanente et ne peut être annulée.</string>
     <string name="confirm_delete_album">Supprimer l’album  « %1$s » ?</string>
     <string name="confirm_delete_several_media">Supprimer ces %1$d médias ?</string>
@@ -141,6 +151,14 @@
     <string name="video">Vidéo</string>
     <string name="bookmarks">Favoris</string>
     <string name="equalizer">Égaliseur</string>
+    <string name="import_equalizer">Importer l’égaliseur</string>
+    <string name="equalizer_exported">Égaliseur(s) exporté(s) vers %s</string>
+    <string name="equalizer_copy_template">(copier %s)</string>
+    <string name="new_equalizer_copy_template">Nouvel égaliseur %s</string>
+    <string name="show_all">Tout afficher</string>
+    <string name="hide_all">Tout masquer</string>
+    <string name="export_all">Tout exporter</string>
+    <string name="import_all">Tout importer</string>
     <string name="all_albums">Tous les albums</string>
     <string name="genres">Genres</string>
     <string name="playlists">Listes de lecture</string>
@@ -247,8 +265,6 @@
 
     <string name="streams">Flux</string>
     <string name="open_mrl_dialog_msg">Entrez une addresse réseau : p. ex. http://, mms:// ou rtsp://</string>
-    <string name="encountered_error_title">Erreur de lecture</string>
-    <string name="encountered_error_message">Une erreur est survenue concernant ce média.\nVeuillez essayer d’actualiser votre médiathèque.</string>
     <string name="invalid_location">L’emplacement « %1$s » ne peut être lu.</string>
     <string name="missing_location">Ce média provient d’un disque non disponible et ne peut être lu.</string>
 
@@ -331,6 +347,8 @@
     <string name="add_custom_path_description">Entrer un dossier additionnel à analyser :</string>
     <string name="remove_custom_path">Supprimer le chemin personnalisé</string>
     <string name="group_ban_folder">Bannir un dossier de la bibliothèque multimédia</string>
+    <string name="ban_folder">Bannir un dossier</string>
+    <string name="ban_folder_explanation">En interdisant ce dossier, vous ne verrez pas ses médias dans la section vidéo ou audio de l’application, mais ils seront toujours accessibles à partir du navigateur.\nPour le rendre à nouveau visible, allez dans les paramètres, %s et appuyez longuement sur ce dossier.</string>
 
     <string name="hardware_acceleration">Accélération matérielle</string>
     <string name="hardware_acceleration_summary">Désactivée : meilleure stabilité.\nAu décodage : peut améliorer les performances.\nComplète : peut améliorer davantage les performances</string>
@@ -635,6 +653,8 @@
     <string name="network_shares_discovery">Recherche de partages réseau</string>
     <string name="network_empty">Ce dossier est vide.</string>
     <string name="network_connection_needed">Pas de connexion au réseau local.</string>
+    <string name="network_disabled">Navigation réseau désactivée</string>
+    <string name="browse_network">Parcourir le réseau</string>
     <string name="search_hint">Recherche de média</string>
     <string name="search_in_list_hint">Rechercher dans la liste actuelle</string>
     <string name="search_global">Rechercher dans toute la médiathèque</string>
@@ -655,8 +675,9 @@
 
     <!--What's new-->
     <string name="whats_new_title">Nouveautés de VLC pour Android %s</string>
-    <string name="whats_new_36_webserver_text">Grâce à la nouvelle fonction d’accès à distance, prenez le contrôle de VLC pour Android depuis n’importe quel autre appareil.\nEnvoyez vos médias dans les deux sens, contrôlez votre lecture et bien plus encore !</string>
-    <string name="whats_new_36_favorites_text">Vous pouvez désormais mettre en favoris vos médias, vos listes de lecture, vos artistes ou vos albums.\nRetrouvez vos contenus préférés en un clin d’œil en les filtrant par favoris uniquement !</string>
+    <string name="whats_new_37_equalizer_text">L’égaliseur a été entièrement repensé. Il est plus facile à utiliser, vous permet de désactiver les préréglages par défaut et vous permet de sauvegarder, restaurer et partager vos préréglages.</string>
+    <string name="whats_new_37_import_export">Nous avons amélioré la fonctionnalité de sauvegarde et de restauration des paramètres. Elle vous permet désormais de sauvegarder davantage de paramètres, y compris les préréglages de l’égaliseur.</string>
+    <string name="show_in_settings">Afficher dans les paramètres</string>
 
 <!--    update-->
     <string name="update_title">Mise à jour disponible</string>
@@ -899,7 +920,6 @@
     <string name="eq_snap_bands">Bandes élastiques</string>
     <string name="enable_equalizer">Activer</string>
     <string name="preamp">Préampli</string>
-    <string name="presets">Présélections</string>
     <string name="reset">Réinitialiser</string>
     <plurals name="tracks_inserted">
         <item quantity="one">%d Piste insérée</item>
@@ -915,7 +935,9 @@
     <string name="validation_delete_playlist">Voulez-vous vraiment supprimer cette liste de lecture ?</string>
     <string name="validation_delete_playlist_text">Cette action ne peut pas être annulée.</string>
     <string name="display_settings">Paramètres d’affichage</string>
-    <string name="incognito_mode">Mode privé</string>
+    <string name="incognito_mode">Mode incognito</string>
+    <string name="persistent_incognito_mode">Mode incognito persistant</string>
+    <string name="persistent_incognito_mode_summary">Le mode incognito reste activé même si l’application est redémarrée.</string>
     <string name="display_in_list">Afficher en liste</string>
     <string name="display_in_grid">Afficher en grille</string>
     <string name="dump_db_succes">Base de données exportée à la racine du stockage interne</string>
@@ -1133,6 +1155,11 @@
     <string name="move_down">Descendre</string>
     <string name="remove_from_playlist">Supprimer de la liste de lecture</string>
     <string name="play_media">Lire %s</string>
+    <string name="edit_eq_preset">Modifier le préréglage de l’égaliseur</string>
+    <string name="edit_eq_name_not_allowed">Ce nom n’est pas autorisé</string>
+    <string name="export_equalizer">Exporter l’égaliseur</string>
+    <string name="hide_equalizer">Masquer l’égaliseur</string>
+    <string name="show_equalizer">Afficher l’égaliseur</string>
 
     <!-- Duplication Warning Dialog -->
     <string name="message_primary_default">Ajouter un ou des élément(s) en double ?</string>
@@ -1298,6 +1325,7 @@
     <string name="ra_prepare_download">Préparation du téléchargement</string>
     <string name="ra_forbidden">Contenu désactivé dans les paramètres</string>
     <string name="ra_playback_forbidden">Contrôle de lecture désactivé dans les paramètres</string>
+    <string name="ra_logs_forbidden">Partage des journaux désactivé dans les paramètres</string>
     <string name="ra_code_requested_explanation">Pour protéger votre serveur, l’accès est protégé.\nVeuillez saisir le code affiché dans vos notifications</string>
     <string name="ra_ssl_explanation_title">Connexion non sécurisée</string>
     <string name="ra_ssl_explanation">Votre connexion n’est pas sécurisée.</string>
@@ -1359,6 +1387,7 @@
     <string name="export_settings">Exporter les paramètres</string>
     <string name="restore_settings_summary">Restaurer vos paramètres à partir d’une exportation précédente</string>
     <string name="restore_settings">Restaurer les paramètres</string>
+    <string name="obsolete_restore_settings">Vos paramètres d’exportation sont obsolètes. Veuillez les exporter à nouveau</string>
     <string name="export_settings_success">Paramètres exportés avec succès vers le stockage interne root</string>
     <string name="export_settings_failure">Une erreur s’est produite lors de l’exportation de vos paramètres</string>
 
@@ -1388,4 +1417,13 @@
     <string name="generating_logs">Création de journaux. Veuillez patienter.</string>
     <string name="default_playback_action">Action de lecture</string>
     <string name="files">Fichiers</string>
-</resources>
+    <string name="remote_access_feedback_generate">Générer un rapport</string>
+    <string name="remote_access_feedback_generated">Votre rapport d’évaluation a été généré</string>
+    <string name="remote_access_feedback_generated_explanation">Appuyez sur le bouton ci-dessous pour l’envoyer à l’aide de votre client de messagerie par défaut. Si vous rencontrez des difficultés, vous pouvez copier-coller les champs ci-dessous et envoyer le courriel par vos propres moyens.</string>
+    <string name="remote_access_feedback_file_explanation">Vous venez de télécharger le fichier nécessaire. N’oubliez pas de le joindre à votre courriel.</string>
+    <string name="generic_copied_to_clipboard">Copié dans le presse-papiers</string>
+    <string name="feedback_email_warning">Aucun client de messagerie installé</string>
+    <string name="feedback_email_warning_explanation">Le moyen le plus simple de partager vos commentaires est d’utiliser la fonction %1$s.\nPour ce faire, activez l’accès à distance dans les paramètres, suivez les instructions et choisissez l’entrée %2$s dans le menu.</string>
+    <string name="feedback_email_warning_remote_action">Ouvrir les paramètres</string>
+    <string name="feedback_email_warning_try_anyway">Essayer tout de même</string>
+    </resources>

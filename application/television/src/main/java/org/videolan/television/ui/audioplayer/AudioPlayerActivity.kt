@@ -64,8 +64,8 @@ import org.videolan.tools.formatRateString
 import org.videolan.tools.setGone
 import org.videolan.tools.setVisible
 import org.videolan.vlc.PlaybackService
-import org.videolan.vlc.gui.audio.EqualizerFragment
 import org.videolan.vlc.gui.dialogs.CONFIRM_BOOKMARK_RENAME_DIALOG_RESULT
+import org.videolan.vlc.gui.dialogs.EqualizerFragmentDialog
 import org.videolan.vlc.gui.dialogs.PlaybackSpeedDialog
 import org.videolan.vlc.gui.dialogs.RENAME_DIALOG_MEDIA
 import org.videolan.vlc.gui.dialogs.RENAME_DIALOG_NEW_NAME
@@ -113,7 +113,7 @@ class AudioPlayerActivity : BaseTvActivity(),KeycodeListener, PlaybackService.Ca
         binding = DataBindingUtil.setContentView(this, R.layout.tv_audio_player)
         settings = Settings.getInstance(this)
 
-        model = ViewModelProvider(this).get(PlaylistModel::class.java)
+        model = ViewModelProvider(this)[PlaylistModel::class.java]
         binding.playlist.layoutManager = LinearLayoutManager(this)
         adapter = PlaylistAdapter(this, model)
         binding.playlist.adapter = adapter
@@ -308,7 +308,7 @@ class AudioPlayerActivity : BaseTvActivity(),KeycodeListener, PlaybackService.Ca
     }
 
     override fun showEqualizer() {
-        EqualizerFragment().show(supportFragmentManager, "equalizer")
+        EqualizerFragmentDialog().show(supportFragmentManager, "equalizer")
     }
 
     override fun increaseRate() {

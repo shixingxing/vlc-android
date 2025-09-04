@@ -616,15 +616,23 @@
 
     <string-array name="daynight_mode_entries">
         <item>@string/daynight_follow_system_title</item>
-        <!--item>@string/daynight_battery_title</item-->
-        <item>@string/daynight_title</item>
         <item>@string/light_theme</item>
         <item>@string/enable_black_theme</item>
     </string-array>
 
     <string-array name="daynight_mode_values">
         <item>-1</item>
-        <!--item>3</item-->
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
+    <string-array name="daynight_mode_legacy_entries">
+        <item>@string/daynight_title</item>
+        <item>@string/light_theme</item>
+        <item>@string/enable_black_theme</item>
+    </string-array>
+
+    <string-array name="daynight_mode_legacy_values">
         <item>0</item>
         <item>1</item>
         <item>2</item>
@@ -640,22 +648,6 @@
         <item>0</item>
         <item>1</item>
         <item>2</item>
-    </string-array>
-
-    <string-array name="fastplay_speed_entries">
-        <item>1.25x</item>
-        <item>1.5x</item>
-        <item>2x</item>
-        <item>4x</item>
-        <item>8x</item>
-    </string-array>
-
-    <string-array name="fastplay_speed_values">
-        <item>1.25</item>
-        <item>1.5</item>
-        <item>2</item>
-        <item>4</item>
-        <item>8</item>
     </string-array>
 
     <string-array name="widget_themes_entries" translatable="false">

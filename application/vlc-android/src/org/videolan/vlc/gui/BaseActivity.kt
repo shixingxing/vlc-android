@@ -1,6 +1,5 @@
 package org.videolan.vlc.gui
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -14,12 +13,16 @@ import android.view.KeyEvent
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.app.BaseContextWrappingDelegate
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -47,7 +50,6 @@ import org.videolan.vlc.viewmodels.DisplaySettingsViewModel
 
 abstract class BaseActivity : AppCompatActivity() {
 
-    private var currentNightMode: Int = 0
     private var startColor: Int = 0
     lateinit var settings: SharedPreferences
     private var lastDisplayedOTPCode = ""
@@ -57,10 +59,16 @@ abstract class BaseActivity : AppCompatActivity() {
     open val displayTitle = false
     open fun forcedTheme():Int? = null
     open var isOTPActivity:Boolean = false
+
+    /**
+     * Enables edge-to-edge mode for this activity.
+     * Set it to false if you want to override this behavior.
+     */
+    open var isEdgeToEdge = true
     abstract fun getSnackAnchorView(overAudioPlayer:Boolean = false): View?
     private var baseContextWrappingDelegate: AppCompatDelegate? = null
     private var resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
+        if (result.resultCode == RESULT_OK) {
             FileUtils.getUri(result.data?.data)?.let { MediaUtils.openMediaNoUi(this, it) }
         }
     }
@@ -75,6 +83,22 @@ abstract class BaseActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         settings = Settings.getInstance(this)
+        if (settings.getString("app_theme", "-1") == "0") isEdgeToEdge = false
+        if (isEdgeToEdge) enableEdgeToEdge()
+        settings = Settings.getInstance(this)
+        if (isEdgeToEdge) ViewCompat.setOnApplyWindowInsetsListener(findViewById(android.R.id.content)) { v, windowInsets ->
+            val bars = windowInsets.getInsets(
+                WindowInsetsCompat.Type.systemBars()
+                        or WindowInsetsCompat.Type.displayCutout()
+            )
+            v.updatePadding(
+                left = bars.left,
+                top = bars.top,
+                right = bars.right,
+                bottom = bars.bottom,
+            )
+            WindowInsetsCompat.CONSUMED
+        }
         /* Theme must be applied before super.onCreate */
         applyTheme()
         super.onCreate(savedInstanceState)

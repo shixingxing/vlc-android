@@ -33,13 +33,9 @@ ext {
 }
 
 android {
-    namespace 'org.videolan.vlc.remoteaccessclient'
+    namespace = 'org.videolan.vlc.remoteaccessclient'
 
     defaultConfig {
-        minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
-        compileSdk rootProject.ext.compileSdkVersion
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
         resValue "string", "build_remote_access_revision", remoteAccessRevision()

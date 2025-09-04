@@ -48,6 +48,7 @@ import org.videolan.resources.AndroidDevices
 import org.videolan.resources.AppContextProvider
 import org.videolan.resources.SCHEME_PACKAGE
 import org.videolan.resources.util.isExternalStorageManager
+import org.videolan.tools.KEY_USER_DECLINED_STORAGE_ACCESS
 import org.videolan.tools.Settings
 import org.videolan.tools.putSingle
 import org.videolan.vlc.BuildConfig
@@ -60,7 +61,6 @@ object Permissions {
 
     var timeAsked: Long = -1L
     const val PERMISSION_STORAGE_TAG = 255
-    const val PERMISSION_SETTINGS_TAG = 254
     const val PERMISSION_WRITE_STORAGE_TAG = 253
     const val MANAGE_EXTERNAL_STORAGE = 256
 
@@ -301,7 +301,7 @@ object Permissions {
                 .setPositiveButton(activity.getString(R.string.permission_ask_again)) { _, _ ->
                     val settings = Settings.getInstance(activity)
                         activity.requestStoragePermission()
-                    settings.putSingle("user_declined_storage_access", true)
+                    settings.putSingle(KEY_USER_DECLINED_STORAGE_ACCESS, true)
                 }
         if (exit) {
             dialogBuilder.setNegativeButton(activity.getString(R.string.exit_app)) { _, _ -> activity.finish() }
@@ -318,7 +318,7 @@ object Permissions {
                 .setPositiveButton(activity.getString(R.string.permission_ask_again)) { _, _ ->
                     val settings = Settings.getInstance(activity)
                         activity.requestStoragePermission()
-                    settings.putSingle("user_declined_storage_access", true)
+                    settings.putSingle(KEY_USER_DECLINED_STORAGE_ACCESS, true)
                 }
         if (exit) {
             dialogBuilder.setNegativeButton(activity.getString(R.string.exit_app)) { _, _ -> activity.finish() }
@@ -399,7 +399,7 @@ object Permissions {
         if ("file" != uri.scheme) return false
         if (uri.path!!.startsWith(AndroidDevices.EXTERNAL_PUBLIC_DIRECTORY)) {
             //Check write permission starting Oreo
-            if (AndroidUtil.isOOrLater && !Permissions.canWriteStorage()) {
+            if (AndroidUtil.isOOrLater && !canWriteStorage()) {
                 askWriteStoragePermission(activity, false, callback)
                 return false
             }

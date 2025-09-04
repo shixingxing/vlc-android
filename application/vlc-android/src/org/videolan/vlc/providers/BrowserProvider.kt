@@ -21,13 +21,13 @@
 package org.videolan.vlc.providers
 
 import android.content.Context
-import android.net.Uri
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Process
 import android.text.format.Formatter
 import android.util.Log
 import androidx.collection.SimpleArrayMap
+import androidx.core.net.toUri
 import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CompletionHandler
@@ -111,7 +111,7 @@ abstract class BrowserProvider(val context: Context, val dataset: LiveDataset<Me
     fun getComparator(nbOfDigits: Int): Comparator<MediaLibraryItem>? = when {
             Settings.showTvUi && sort in arrayOf(Medialibrary.SORT_ALPHA, Medialibrary.SORT_DEFAULT) && desc -> getTvDescComp(Settings.tvFoldersFirst)
             Settings.showTvUi && sort in arrayOf(Medialibrary.SORT_ALPHA, Medialibrary.SORT_DEFAULT) && !desc -> getTvAscComp(Settings.tvFoldersFirst)
-            url != null && Uri.parse(url)?.scheme == "upnp" -> null
+            url != null && url.toUri().scheme == "upnp" -> null
             sort == Medialibrary.SORT_ALPHA && desc -> descComp
             sort == Medialibrary.SORT_ALPHA && !desc -> ascComp
             (sort == Medialibrary.SORT_FILENAME || sort == Medialibrary.SORT_DEFAULT) && desc -> getFilenameDescComp(nbOfDigits)
@@ -246,7 +246,7 @@ abstract class BrowserProvider(val context: Context, val dataset: LiveDataset<Me
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private suspend fun filesFlow(url: String? = this.url, interact : Boolean = true) = channelFlow<IMedia> {
+    private fun filesFlow(url: String? = this.url, interact : Boolean = true) = channelFlow<IMedia> {
         val listener = object : EventListener {
             override fun onMediaAdded(index: Int, media: IMedia) {
                 if (!isClosedForSend) trySend(media.apply { retain() })
@@ -438,7 +438,7 @@ abstract class BrowserProvider(val context: Context, val dataset: LiveDataset<Me
 
     fun saveList(media: MediaWrapper) = foldersContentMap[media]?.let { if (it.isNotEmpty()) prefetchLists[media.location] = it }
 
-    fun isFolderEmpty(mw: MediaWrapper) = foldersContentMap[mw]?.isEmpty() ?: true
+    fun isFolderEmpty(mw: MediaWrapper) = foldersContentMap[mw]?.isEmpty() != false
 
     companion object : DependencyProvider<BrowserProvider>() {
         private val browserHandler by lazy {

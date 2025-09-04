@@ -50,6 +50,7 @@ import org.videolan.tools.AppScope
 import org.videolan.tools.KEY_ENABLE_REMOTE_ACCESS
 import org.videolan.tools.KEY_INCOGNITO
 import org.videolan.tools.KEY_PERSISTENT_INCOGNITO
+import org.videolan.tools.KEY_SET_LOCALE
 import org.videolan.tools.Settings
 import org.videolan.tools.putSingle
 import org.videolan.vlc.BuildConfig
@@ -96,7 +97,7 @@ class AppSetupDelegate : AppDelegate,
             settings.putSingle(KEY_INCOGNITO, false)
 
 
-        AppContextProvider.setLocale(settings.getString("set_locale", ""))
+        AppContextProvider.setLocale(settings.getString(KEY_SET_LOCALE, ""))
 
         //Initiate Kotlinx Dispatchers in a thread to prevent ANR
         backgroundInit()
@@ -123,9 +124,11 @@ class AppSetupDelegate : AppDelegate,
     // init operations executed in background threads
     private fun Context.backgroundInit() = AppScope.launch outerLaunch@ {
         VersionMigration.migrateVersion(this@backgroundInit)
+        Settings.initPostMigration(this@backgroundInit)
         launch(Dispatchers.IO) innerLaunch@ {
             if (!VLCInstance.testCompatibleCPU(AppContextProvider.appContext)) return@innerLaunch
             Dialog.setCallbacks(VLCInstance.getInstance(this@backgroundInit), DialogDelegate)
+            VersionMigration.migrateVersionAfterLibVLC(this@backgroundInit)
         }
         if (!AndroidDevices.isAndroidTv) sendBroadcast(Intent(MiniPlayerAppWidgetProvider.ACTION_WIDGET_INIT).apply {
             component = ComponentName(appContextProvider.appContext, MiniPlayerAppWidgetProvider::class.java)
