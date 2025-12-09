@@ -1,6 +1,6 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
-    ext.android_plugin_version = '8.13.0'
+    ext.android_plugin_version = '8.13.1'
     ext.kotlin_version = '2.1.20'
     ext.kotlinx_version = '1.7.1'
     repositories {
@@ -43,8 +43,8 @@ allprojects {
 
 ext {
     appId = "org.videolan.vlc"
-    versionCode = 3060530
-    versionName = project.hasProperty('forceVlc4') && project.getProperty('forceVlc4') ? '4.0.0-preview - ' + versionCode : '3.7.0 Beta 2'
+    versionCode = 3060540
+    versionName = project.hasProperty('forceVlc4') && project.getProperty('forceVlc4') ? '4.0.0-preview - ' + versionCode : '3.7.0 Beta 3'
     vlcMajorVersion = project.hasProperty('forceVlc4') && project.getProperty('forceVlc4') ? 4 : 3
     remoteAccessVersion = '0.10.0'
     libvlcVersion = vlcMajorVersion == 3 ? '3.6.5' :'4.0.0-eap23'
