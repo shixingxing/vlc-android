@@ -1,3 +1,22 @@
+Changes between 3.7.1 Beta 1 and 3.7.1 Beta 2:
+------------------
+ * Remote access: allow playing audio media in the browser
+ * Crash and bahavior fixes
+
+Changes between 3.7.0 and 3.7.1 Beta 1:
+------------------
+ * Equalizer fixes
+ * Add back the deletion for multiple file sin the browser
+ * Update the remote access OTP code length
+ * Improve the feedback UI
+ * Add more size options for the subtitle size
+ * Crash fixes
+
+Changes between 3.7.0 Beta 3 and 3.7.0:
+------------------
+ * UI fixes
+ * Crash fixes
+
 Changes between 3.7.0 Beta 2 and 3.7.0 Beta 3:
 ------------------
  * Improve the RTL layouts

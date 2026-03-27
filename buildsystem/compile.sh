@@ -154,7 +154,7 @@ elif [ "$ANDROID_ABI" = "x86_64" ]; then
     ARCH="x86_64"
     TRIPLET="x86_64-linux-android"
 else
-    diagnostic "Invalid arch specified: '$ANDROID_ABI'."
+    diagnostic "Invalid arch specified: '$ANDROID_ABI' (arm64-v8a|armeabi-v7a|x86_64|x86)."
     diagnostic "Try --help for more information"
     exit 1
 fi
@@ -203,6 +203,12 @@ init_local_props() {
     echo_props() {
         echo "sdk.dir=$ANDROID_SDK"
         echo "android.ndkPath=$ANDROID_NDK"
+        NDK_FULL_VERSION=$(grep -o '^Pkg.Revision.*[0-9]*.*' $ANDROID_NDK/source.properties |cut -d " " -f 3)
+        echo "android.ndkFullVersion=$NDK_FULL_VERSION"
+        if [ $(command -v cmake) >/dev/null 2>&1 ]; then
+            # prefix of the cmake installation, not the cmake path or the dir that contains the cmake executable
+            echo "cmake.dir=$(dirname $(dirname $(command -v cmake)))"
+        fi
     }
     # first check if the file just needs to be created for the first time
     if [ ! -f "$1" ]; then
@@ -241,7 +247,9 @@ init_local_props() {
         while IFS= read -r LINE || [ -n "$LINE" ]; do
             line_sdk_dir="${LINE#sdk.dir=}"
             line_ndk_dir="${LINE#android.ndkPath=}"
-            if [ "x$line_sdk_dir" = "x$LINE" ] && [ "x$line_ndk_dir" = "x$LINE" ]; then
+            line_ndk_version="${LINE#android.ndkFullVersion=}"
+            line_cmake_dir="${LINE#cmake.dir=}"
+            if [ "x$line_sdk_dir" = "x$LINE" ] && [ "x$line_ndk_dir" = "x$LINE" ] && [ "x$line_ndk_version" = "x$LINE" ] && [ "x$line_cmake_dir" = "x$LINE" ]; then
                 echo "$LINE"
             fi
         done <"$1" >"$temp_props"
@@ -266,45 +274,16 @@ if [ "$FORCE_VLC_4" = 1 ]; then
     gradle_prop="-PforceVlc4=true"
 fi
 
-##########
-# GRADLE #
-##########
-
-if [ ! -e "./gradlew" ] || [ ! -x "./gradlew" ]; then
-    diagnostic "gradlew not found"
-    # the SHA256 is found in https://gradle.org/release-checksums/
-    GRADLE_VERSION=8.13
-    GRADLE_SHA256=20f1b1176237254a6fc204d8434196fa11a4cfb387567519c61556e8710aed78
-    GRADLE_URL=https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip
-    GRADLE_DOWNLOADED_ZIP=gradle-${GRADLE_VERSION}-bin.zip
-
-    export PATH="$(pwd -P)/gradle-${GRADLE_VERSION}/bin:$PATH"
-    GRADLE_PATH_VERSION=$(cd buildsystem/gradle_version; gradle -q 2>/dev/null | grep gradle_version= | cut -b 16-)
-    if [ "$GRADLE_PATH_VERSION" != "$GRADLE_VERSION" ]; then
-        diagnostic "gradle could not be found in PATH, downloading"
-        wget ${GRADLE_URL} -O ${GRADLE_DOWNLOADED_ZIP}  2>/dev/null || curl -LO ${GRADLE_URL} || fail "gradle: download failed"
-        echo $GRADLE_SHA256 ${GRADLE_DOWNLOADED_ZIP} | sha256sum -c || fail "gradle: hash mismatch"
-
-        unzip -o ${GRADLE_DOWNLOADED_ZIP} || fail "gradle: unzip failed"
-        rm -rf ${GRADLE_DOWNLOADED_ZIP}
-    fi
-
-    gradle wrapper ${gradle_prop} || fail "gradle: wrapper failed"
-
-    chmod a+x gradlew
-fi
-./gradlew -version || fail "gradle: wrapper failed"
-
 ####################
-# Fetch VLC source #
+# Fetch libVLCjni source #
 ####################
 
 
 if [ "$FORCE_VLC_4" = 1 ]; then
-    LIBVLCJNI_TESTED_HASH=85f27ca0c4ce0a49d649b365e2b099079c05cd4a
+    LIBVLCJNI_TESTED_HASH=da9a05e49b63780977b4a993e4f2705f7b1290f8
     LIBVLCJNI_BRANCH="master"
 else
-    LIBVLCJNI_TESTED_HASH=965e8648717076654f463ae64ee1d008d7ff282d
+    LIBVLCJNI_TESTED_HASH=7cd0c151da4162aa3052fb6949ddab1436d8fafb
     LIBVLCJNI_BRANCH="libvlcjni-3.x"
 fi
 LIBVLCJNI_REPOSITORY=https://code.videolan.org/videolan/libvlcjni.git
@@ -326,6 +305,46 @@ if [ ! -d "$VLC_LIBJNI_PATH" ] || [ ! -d "$VLC_LIBJNI_PATH/.git" ]; then
     init_local_props local.properties || { echo "Error initializing local.properties"; exit $?; }
     cd ..
 fi
+
+##########
+# GRADLE #
+##########
+
+GRADLE_VERSION=9.2.1
+# the SHA256 is found in https://gradle.org/release-checksums/
+GRADLE_SHA256=72f44c9f8ebcb1af43838f45ee5c4aa9c5444898b3468ab3f4af7b6076c5bc3f
+GRADLE_URL=https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip
+GRADLE_DOWNLOADED_ZIP=gradle-${GRADLE_VERSION}-bin.zip
+
+if [ -e "./gradlew" ] && [ -x "./gradlew" ]; then
+    GRADLE_CACHED_VERSION=$(./gradlew -q 2>/dev/null | grep gradle_version= | cut -b 16-)
+    if [ "$GRADLE_PATH_VERSION" != "$GRADLE_VERSION" ]; then
+        diagnostic "gradlew version $GRADLE_PATH_VERSION not matching $GRADLE_VERSION"
+        rm -rf "./gradlew"
+    fi
+fi
+if [ ! -e "./gradlew" ] || [ ! -x "./gradlew" ]; then
+    diagnostic "gradlew not found"
+    export PATH="$(pwd -P)/gradle-${GRADLE_VERSION}/bin:$PATH"
+    GRADLE_PATH_VERSION=$(cd buildsystem/gradle_version; gradle -q 2>/dev/null | grep gradle_version= | cut -b 16-)
+    if [ "$GRADLE_PATH_VERSION" != "$GRADLE_VERSION" ]; then
+        diagnostic "gradle could not be found in PATH, downloading"
+        wget ${GRADLE_URL} -O ${GRADLE_DOWNLOADED_ZIP}  2>/dev/null || curl -LO ${GRADLE_URL} || fail "gradle: download failed"
+        echo $GRADLE_SHA256 ${GRADLE_DOWNLOADED_ZIP} | sha256sum -c || fail "gradle: hash mismatch"
+
+        unzip -o ${GRADLE_DOWNLOADED_ZIP} || fail "gradle: unzip failed"
+        rm -rf ${GRADLE_DOWNLOADED_ZIP}
+    fi
+
+    gradle wrapper ${gradle_prop} || fail "gradle: wrapper failed"
+
+    chmod a+x gradlew
+fi
+./gradlew -version || fail "gradle: wrapper failed"
+
+####################
+# Fetch VLC source #
+####################
 
 # If you want to use an existing vlc dir add its path to an VLC_SRC_DIR env var
 if [ -z "$VLC_SRC_DIR" ]; then
@@ -429,7 +448,7 @@ else
 fi
 
 if [ ! -d "./application/remote-access-client/remoteaccess/dist" ] ; then
-    echo "\033[1;32mWARNING: This was built without the remote access at ./remoteaccess/dist ..."
+    echo "\033[1;32mWARNING: This was built without the remote access at ./remoteaccess/dist ...\033[0m"
 fi
 
 #######

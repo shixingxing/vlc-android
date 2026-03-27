@@ -30,6 +30,7 @@ import org.videolan.vlc.gui.helpers.NotificationHelper
 import org.videolan.vlc.gui.helpers.REMOTE_ACCESS_CODE_ID
 import org.videolan.vlc.remoteaccessserver.ssl.SecretGenerator
 import org.videolan.vlc.remoteaccessserver.utils.CypherUtils
+import org.videolan.vlc.util.RemoteAccessUtils
 import java.security.SecureRandom
 
 
@@ -49,7 +50,7 @@ object RemoteAccessOTP {
         return otpCode
     }
 
-    fun generateCode(): String = (SecureRandom().nextInt(8999) + 1000).toString()
+    fun generateCode(): String = (SecureRandom().nextInt(899999) + 100000).toString()
 
     /**
      * Verify if the code is valid by using the challenge
@@ -104,6 +105,26 @@ object RemoteAccessOTP {
      */
     fun removeCodeWithChallenge(challenge: String) {
         codes.remove(codes.find { challenge == it.challenge })
+    }
+
+    /**
+     * Remove code when the "it's not me" button is pressed
+     *
+     * @param code the code to remove
+     */
+    fun removeCode(appContext: Context, code: String) {
+        codes.remove(codes.find { code == it.code })
+        with(NotificationManagerCompat.from(appContext)) {
+            cancel(REMOTE_ACCESS_CODE_ID)
+        }
+    }
+
+    suspend fun removeAllCodes(appContext: Context) {
+        codes.clear()
+        with(NotificationManagerCompat.from(appContext)) {
+            cancel(REMOTE_ACCESS_CODE_ID)
+        }
+        RemoteAccessUtils.otpFlow.emit(null)
     }
 }
 

@@ -467,6 +467,7 @@ abstract class BaseAudioBrowser<T : MedialibraryViewModel> : MediaBrowserFragmen
             }
             MediaLibraryItem.TYPE_ALBUM -> {
                 createCtxPlaylistAlbumFlags().apply {
+                    remove(CTX_RENAME)
                     if (item.tracksCount > 2) add(CTX_PLAY_SHUFFLE)
                     if ((item as? Album)?.isFavorite == true) add(CTX_FAV_REMOVE) else add(CTX_FAV_ADD)
                 }
@@ -480,6 +481,8 @@ abstract class BaseAudioBrowser<T : MedialibraryViewModel> : MediaBrowserFragmen
             MediaLibraryItem.TYPE_PLAYLIST -> {
                 createCtxPlaylistAlbumFlags().apply {
                     add(CTX_PLAY_AS_AUDIO)
+                    remove(CTX_GO_TO_ALBUM_ARTIST)
+                    remove(CTX_GO_TO_ARTIST)
                     if (item.tracksCount > 2) add(CTX_PLAY_SHUFFLE)
                     if (item.isFavorite) add(CTX_FAV_REMOVE) else add(CTX_FAV_ADD)
                 }

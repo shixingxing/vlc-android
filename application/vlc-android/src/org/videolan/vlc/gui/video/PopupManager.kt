@@ -57,6 +57,7 @@ import org.videolan.vlc.PlaybackService
 import org.videolan.vlc.R
 import org.videolan.vlc.gui.helpers.MISC_CHANNEL_ID
 import org.videolan.vlc.gui.view.PopupLayout
+import org.videolan.vlc.isVLC4
 import org.videolan.vlc.util.getPendingIntent
 import kotlin.math.absoluteValue
 import kotlin.math.floor
@@ -169,37 +170,50 @@ class PopupManager(private val service: PlaybackService) : PlaybackService.Callb
         val displayW = view.width
         val displayH = view.height
 
-        // sanity check
-        if (displayW * displayH == 0) {
-            Log.e(TAG, "Invalid surface size")
-            return
-        }
+        if (isVLC4())
+        {
+            if (width == 0 || height == 0) {
+                view.setViewSize(displayW, displayH)
+                vlcVout?.setWindowSize(displayW, displayH)
+                return
+            }
 
-        if (width == 0 || height == 0) {
-            view.setViewSize(displayW, displayH)
-            return
+            view.setViewSize(visibleWidth, visibleHeight)
         }
-
-        // compute the aspect ratio
-        var dw = displayW.toDouble()
-        var dh = displayH.toDouble()
-        val ar = if (sarDen == sarNum) {
-            /* No indication about the density, assuming 1:1 */
-            visibleWidth.toDouble() / visibleHeight.toDouble()
-        } else {
-            /* Use the specified aspect ratio */
-            val vw = visibleWidth * sarNum.toDouble() / sarDen
-            vw / visibleHeight
-        }
-
-        // compute the display aspect ratio
-        val dar = dw / dh
-        if (dar < ar)
-            dh = dw / ar
         else
-            dw = dh * ar
+        {
+            // sanity check
+            if (displayW * displayH == 0) {
+                Log.e(TAG, "Invalid surface size")
+                return
+            }
 
-        view.setViewSize(floor(dw).toInt(), floor(dh).toInt())
+            if (width == 0 || height == 0) {
+                view.setViewSize(displayW, displayH)
+                return
+            }
+
+            // compute the aspect ratio
+            var dw = displayW.toDouble()
+            var dh = displayH.toDouble()
+            val ar = if (sarDen == sarNum) {
+                /* No indication about the density, assuming 1:1 */
+                visibleWidth.toDouble() / visibleHeight.toDouble()
+            } else {
+                /* Use the specified aspect ratio */
+                val vw = visibleWidth * sarNum.toDouble() / sarDen
+                vw / visibleHeight
+            }
+
+            // compute the display aspect ratio
+            val dar = dw / dh
+            if (dar < ar)
+                dh = dw / ar
+            else
+                dw = dh * ar
+
+            view.setViewSize(floor(dw).toInt(), floor(dh).toInt())
+        }
     }
 
     override fun update() {}

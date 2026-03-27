@@ -61,6 +61,7 @@ import io.ktor.server.plugins.compression.Compression
 import io.ktor.server.plugins.compression.matchContentType
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.plugins.origin
+import io.ktor.server.plugins.autohead.AutoHeadResponse
 import io.ktor.server.plugins.partialcontent.PartialContent
 import io.ktor.server.request.host
 import io.ktor.server.request.httpMethod
@@ -78,6 +79,7 @@ import io.ktor.util.hex
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
@@ -123,6 +125,7 @@ import org.videolan.vlc.remoteaccessserver.websockets.RemoteAccessWebSockets
 import org.videolan.vlc.remoteaccessserver.websockets.RemoteAccessWebSockets.setupWebSockets
 import org.videolan.vlc.util.FileUtils
 import org.videolan.vlc.util.Permissions
+import org.videolan.vlc.util.RemoteAccessUtils
 import org.videolan.vlc.util.isSchemeSMB
 import org.videolan.vlc.viewmodels.CallBackDelegate
 import org.videolan.vlc.viewmodels.ICallBackHandler
@@ -159,6 +162,7 @@ class RemoteAccessServer(private val context: Context) : PlaybackService.Callbac
     private val networkSharesResult = ArrayList<MediaLibraryItem>()
     private val networkDiscoveryRunning = AtomicBoolean(false)
     private var lastPlayedLocation = ""
+    private lateinit var removeCodeJob: Job
 
 
     private val _serverStatus = MutableLiveData(ServerStatus.NOT_INIT)
@@ -627,6 +631,7 @@ class RemoteAccessServer(private val context: Context) : PlaybackService.Callbac
                     anyHost()
                 }
                 install(PartialContent)
+                install(AutoHeadResponse)
                 if (BuildConfig.DEBUG) install(CallLogging) {
                     format { call ->
                         val status = call.response.status()
@@ -654,6 +659,15 @@ class RemoteAccessServer(private val context: Context) : PlaybackService.Callbac
                     DialogActivity.loginDialogShown.observeForever(loginObserver)
                     PlaybackService.waitConfirmation.observeForever(confirmationObserver)
                 }
+
+                removeCodeJob = AppScope.launch {
+                    RemoteAccessUtils.otpCodeRemoveFlow.collect {
+                        it?.let {
+                            RemoteAccessOTP.removeCode(context, it)
+                            RemoteAccessUtils.otpCodeRemoveFlow.emit(null)
+                        }
+                    }
+                }
             }
             environment.monitor.subscribe(ApplicationStopped) {
                 AppScope.launch(Dispatchers.Main) {
@@ -661,6 +675,7 @@ class RemoteAccessServer(private val context: Context) : PlaybackService.Callbac
                     DialogActivity.loginDialogShown.removeObserver(loginObserver)
                     PlaybackService.waitConfirmation.removeObserver(confirmationObserver)
                 }
+                removeCodeJob.cancel()
                 _serverStatus.postValue(ServerStatus.STOPPED)
             }
             watchMedia()

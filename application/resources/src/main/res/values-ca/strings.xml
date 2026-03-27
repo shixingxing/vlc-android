@@ -43,6 +43,8 @@
     <string name="playback_controls">Controls de la reproducció</string>
     <string name="medialibrary_scan">Escaneig de la biblioteca multimèdia</string>
     <string name="Medialibrary_progress">Actualitzacions de l\'escaneig de la biblioteca de medis</string>
+    <string name="ml_database_warning">La vostra base de dades conté la llista de tots els vostres continguts multimèdia. Es compartirà amb els desenvolupadors del VLC.</string>
+    <string name="logs_warning">Pot contenir informació sobre els fitxers multimèdia que heu reproduït. Es compartirà amb els desenvolupadors del VLC.</string>
     <string name="play_from_start">Reprodueix des de l\'inici</string>
     <string name="play_as_audio">Reprodueix com a àudio</string>
     <string name="play_as_video">Reprodueix com a vídeo</string>
@@ -418,7 +420,7 @@
     <string name="popup_keepscreen_summary">Sempre manté la pantalla oberta mentre es mostra un Pop-Up, encara que el vídeo estigui en pausa.</string>
     <string name="browser_show_hidden_files_title">Mostra els fitxers ocults</string>
     <string name="albums_show_track_numbers">Mostra els números de pista</string>
-    <string name="enable_video_screenshot">Obtén una instantània</string>
+    <string name="enable_video_screenshot">Fer una captura</string>
     <string name="enable_tap_and_hold_fastplay_title">Habilita la reproducció ràpida</string>
     <string name="enable_tap_and_hold_fastplay_summary">Toqueu i manteniu premut per augmentar la velocitat de reproducció</string>
     <string name="fastplay_speed_title">Velocitat de reproducció ràpida</string>
@@ -1233,7 +1235,7 @@
     <string name="disable_track">Inhabilita la pista</string>
     <string name="ascending">Ascendent</string>
     <string name="descending">Descendent</string>
-    <string name="screenshot_error">S\'ha produït un error mentre s\'obtenia la instantània</string>
+    <string name="screenshot_error">S\'ha produït un error mentre s\'obtenia la captura</string>
     <string name="disabled">Desactivat</string>
     <string name="enable_screenshot_gesture">Feu un toc amb 3 dits</string>
     <string name="enable_screenshot_button">Mostra el botó de captura de pantalla</string>
