@@ -6,8 +6,6 @@ plugins {
 android {
     compileOptions {
         coreLibraryDesugaringEnabled = true
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     packagingOptions {
@@ -61,7 +59,11 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            kotlinOptions.freeCompilerArgs = ['-Xno-param-assertions']
+            kotlin {
+                compilerOptions {
+                    freeCompilerArgs.addAll(['-Xno-param-assertions'])
+                }
+            }
             signingConfig = signingConfigs.release
         }
         signedRelease {
@@ -144,7 +146,6 @@ android {
             output.outputFileName = outputName
         }
     }
-
 }
 
 dependencies {

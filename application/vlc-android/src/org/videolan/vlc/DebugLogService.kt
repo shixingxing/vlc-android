@@ -21,6 +21,7 @@
 package org.videolan.vlc
 
 import android.annotation.TargetApi
+import android.app.ForegroundServiceStartNotAllowedException
 import android.app.PendingIntent
 import android.app.Service
 import android.content.ComponentName
@@ -35,10 +36,12 @@ import android.os.Looper
 import android.os.RemoteCallbackList
 import android.os.RemoteException
 import android.text.format.DateFormat
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import org.videolan.libvlc.util.AndroidUtil
 import org.videolan.resources.AndroidDevices
 import org.videolan.resources.AppContextProvider
+import org.videolan.resources.NotificationIds
 import org.videolan.resources.util.launchForeground
 import org.videolan.resources.util.startForegroundCompat
 import org.videolan.resources.util.stopForegroundCompat
@@ -62,6 +65,11 @@ class DebugLogService : Service(), Logcat.Callback, Runnable {
     private var saveThread: Thread? = null
     private val callbacks = RemoteCallbackList<IDebugLogServiceCallback>()
     private val binder = DebugLogServiceStub(this)
+
+    override fun onCreate() {
+        super.onCreate()
+        if (AndroidUtil.isOOrLater) forceForeground()
+    }
 
     override fun attachBaseContext(newBase: Context?) {
         super.attachBaseContext(newBase?.getContextWithLocale(AppContextProvider.locale))
@@ -146,7 +154,18 @@ class DebugLogService : Service(), Logcat.Callback, Runnable {
         builder.setSmallIcon(R.drawable.ic_stat_vlc)
         builder.setContentIntent(pi)
         val notification = builder.build()
-        startForegroundCompat(3, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+        try {
+            val type = when {
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE -> ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+                else -> 0
+            }
+            startForegroundCompat(NotificationIds.DEBUG_LOGS, notification, type)
+        } catch (e: Exception) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && e is ForegroundServiceStartNotAllowedException) {
+                Log.w("DebugLogService", "ForegroundServiceStartNotAllowedException caught! ${e.message}", e)
+            }
+        }
     }
 
     @Synchronized
@@ -160,10 +179,13 @@ class DebugLogService : Service(), Logcat.Callback, Runnable {
         sendMessage(MSG_STARTED, null)
     }
 
-    @Synchronized
     fun stop() {
-        logcat!!.stop()
-        logcat = null
+        val stoppedLogcat = synchronized(this) {
+            val localLogcat = logcat ?: return
+            logcat = null
+            localLogcat
+        }
+        stoppedLogcat.stop()
         sendMessage(MSG_STOPPED, null)
         stopForegroundCompat()
         stopSelf()
@@ -243,44 +265,47 @@ class DebugLogService : Service(), Logcat.Callback, Runnable {
     }
 
     class Client @Throws(IllegalArgumentException::class)
-    constructor(private val mContext: Context, private val mCallback: Callback) {
+    constructor(private val context: Context, private val callback: Callback) {
 
-        private var mBound = false
-        private var mIDebugLogService: IDebugLogService? = null
-        private val mHandler = Handler(Looper.getMainLooper())
+        private var bound = false
+        private var iDebugLogService: IDebugLogService? = null
+        private val handler = Handler(Looper.getMainLooper())
+        private var isStarted = false
 
-        private val mICallback = object : IDebugLogServiceCallback.Stub() {
+        private val iDebugLogServiceCallbackStub = object : IDebugLogServiceCallback.Stub() {
             @Throws(RemoteException::class)
             override fun onStopped() {
-                mHandler.post { mCallback.onStopped() }
+                handler.post { callback.onStopped() }
+                isStarted = false
             }
 
             @Throws(RemoteException::class)
             override fun onStarted(logList: List<String>) {
-                mHandler.post { mCallback.onStarted(logList) }
+                handler.post { callback.onStarted(logList) }
+                isStarted = true
             }
 
             @Throws(RemoteException::class)
             override fun onLog(msg: String) {
-                mHandler.post { mCallback.onLog(msg) }
+                handler.post { callback.onLog(msg) }
             }
 
             @Throws(RemoteException::class)
             override fun onSaved(success: Boolean, path: String) {
-                mHandler.post { mCallback.onSaved(success, path) }
+                handler.post { callback.onSaved(success, path) }
             }
         }
 
-        private val mServiceConnection = object : ServiceConnection {
+        private val serviceConnection = object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName, service: IBinder) {
                 synchronized(this@Client) {
-                    mIDebugLogService = IDebugLogService.Stub.asInterface(service)
+                    iDebugLogService = IDebugLogService.Stub.asInterface(service)
                     try {
-                        mIDebugLogService!!.registerCallback(mICallback)
+                        iDebugLogService!!.registerCallback(iDebugLogServiceCallbackStub)
                     } catch (e: RemoteException) {
                         release()
-                        mContext.stopService(Intent(mContext, DebugLogService::class.java))
-                        mCallback.onStopped()
+                        context.stopService(Intent(context, DebugLogService::class.java))
+                        callback.onStopped()
                     }
 
                 }
@@ -288,8 +313,8 @@ class DebugLogService : Service(), Logcat.Callback, Runnable {
 
             override fun onServiceDisconnected(name: ComponentName) {
                 release()
-                mContext.stopService(Intent(mContext, DebugLogService::class.java))
-                mCallback.onStopped()
+                context.stopService(Intent(context, DebugLogService::class.java))
+                callback.onStopped()
             }
         }
 
@@ -301,14 +326,14 @@ class DebugLogService : Service(), Logcat.Callback, Runnable {
         }
 
         init {
-            mBound = mContext.bindService(Intent(mContext, DebugLogService::class.java), mServiceConnection, BIND_AUTO_CREATE)
+            bound = context.bindService(Intent(context, DebugLogService::class.java), serviceConnection, BIND_AUTO_CREATE)
         }
 
         fun start(): Boolean {
             synchronized(this) {
-                if (mIDebugLogService != null) {
+                if (iDebugLogService != null) {
                     try {
-                        mIDebugLogService!!.start()
+                        iDebugLogService!!.start()
                         return true
                     } catch (e: RemoteException) {
                     }
@@ -320,9 +345,9 @@ class DebugLogService : Service(), Logcat.Callback, Runnable {
 
         fun stop(): Boolean {
             synchronized(this) {
-                if (mIDebugLogService != null) {
+                if (iDebugLogService != null) {
                     try {
-                        mIDebugLogService!!.stop()
+                        iDebugLogService!!.stop()
                         return true
                     } catch (e: RemoteException) {
                     }
@@ -334,9 +359,9 @@ class DebugLogService : Service(), Logcat.Callback, Runnable {
 
         fun clear(): Boolean {
             synchronized(this) {
-                if (mIDebugLogService != null) {
+                if (iDebugLogService != null) {
                     try {
-                        mIDebugLogService!!.clear()
+                        iDebugLogService!!.clear()
                         return true
                     } catch (e: RemoteException) {
                     }
@@ -348,9 +373,9 @@ class DebugLogService : Service(), Logcat.Callback, Runnable {
 
         fun save(): Boolean {
             synchronized(this) {
-                if (mIDebugLogService != null) {
+                if (iDebugLogService != null) {
                     try {
-                        mIDebugLogService!!.save()
+                        iDebugLogService!!.save()
                         return true
                     } catch (e: RemoteException) {
                     }
@@ -361,22 +386,24 @@ class DebugLogService : Service(), Logcat.Callback, Runnable {
         }
 
         fun release() {
-            if (mBound) {
+            if (bound) {
                 synchronized(this) {
-                    if (mIDebugLogService != null) {
+                    if (iDebugLogService != null) {
                         try {
-                            mIDebugLogService!!.unregisterCallback(mICallback)
+                            iDebugLogService!!.unregisterCallback(iDebugLogServiceCallbackStub)
                         } catch (e: RemoteException) {
                         }
 
-                        mIDebugLogService = null
+                        iDebugLogService = null
                     }
                 }
-                mBound = false
-                mContext.unbindService(mServiceConnection)
+                bound = false
+                context.unbindService(serviceConnection)
             }
-            mHandler.removeCallbacksAndMessages(null)
+            handler.removeCallbacksAndMessages(null)
         }
+
+        fun isStarted() = isStarted
     }
 
     companion object {

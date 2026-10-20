@@ -18,7 +18,7 @@ android {
         buildConfigField 'String', 'VLC_OPEN_SUBTITLES_API_KEY', "\"${getOSApiKey(project)}\""
         vectorDrawables.useSupportLibrary = true
     }
-
+    
     buildTypes {
         release {
             minifyEnabled false

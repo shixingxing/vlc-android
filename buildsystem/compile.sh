@@ -226,7 +226,7 @@ init_local_props() {
     total_sdk_count=`grep -c "${sdk_line_start}" "$1"`
     good_sdk_count=`grep -c "${sdk_line_start}${android_sdk_regex}\$" "$1"`
     # check for lines setting the NDK directory
-    ndk_line_start="^ndk\.dir="
+    ndk_line_start="^android\.ndkPath="
     total_ndk_count=`grep -c "${ndk_line_start}" "$1"`
     good_ndk_count=`grep -c "${ndk_line_start}${android_ndk_regex}\$" "$1"`
     # if one of each is found and both match the environment vars, no action needed
@@ -280,10 +280,10 @@ fi
 
 
 if [ "$FORCE_VLC_4" = 1 ]; then
-    LIBVLCJNI_TESTED_HASH=da9a05e49b63780977b4a993e4f2705f7b1290f8
+    LIBVLCJNI_TESTED_HASH=a8d53a9151d7e4a9a5dfd0a5eb1cd92669afdc21
     LIBVLCJNI_BRANCH="master"
 else
-    LIBVLCJNI_TESTED_HASH=7cd0c151da4162aa3052fb6949ddab1436d8fafb
+    LIBVLCJNI_TESTED_HASH=0b8dc65efb203c86a0476bc337ddd99ecf1c0ef6
     LIBVLCJNI_BRANCH="libvlcjni-3.x"
 fi
 LIBVLCJNI_REPOSITORY=https://code.videolan.org/videolan/libvlcjni.git
@@ -310,9 +310,9 @@ fi
 # GRADLE #
 ##########
 
-GRADLE_VERSION=9.2.1
+GRADLE_VERSION=9.6.0
 # the SHA256 is found in https://gradle.org/release-checksums/
-GRADLE_SHA256=72f44c9f8ebcb1af43838f45ee5c4aa9c5444898b3468ab3f4af7b6076c5bc3f
+GRADLE_SHA256=bbaeb2fef8710818cf0e261201dab964c572f92b942812df0c3620d62a529a01
 GRADLE_URL=https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip
 GRADLE_DOWNLOADED_ZIP=gradle-${GRADLE_VERSION}-bin.zip
 
@@ -402,7 +402,7 @@ if [ "$NO_ML" != 1 ]; then
         medialig_args="$medialig_args --reset"
     fi
     buildsystem/compile-medialibrary.sh ${medialig_args}
-    cp -a medialibrary/jni/obj/local/${ANDROID_ABI}/*.so "${OUT_DBG_DIR}"
+    cp -a medialibrary/jni/libs/${ANDROID_ABI}/*.so "${OUT_DBG_DIR}"
 fi
 
 ##################

@@ -6,7 +6,7 @@ set -e
 # ARGUMENTS #
 #############
 
-MEDIALIBRARY_HASH=8c56e26c625d757994cffeea84d2a0a2e6033dee
+MEDIALIBRARY_HASH=8d573499ae79298f772e23bfc46dabf486843c25
 
 while [ $# -gt 0 ]; do
   case $1 in
@@ -41,7 +41,7 @@ else
 fi
 
 SRC_DIR=$PWD
-# gets TARGET_TUPLE / ANDROID_API / CLANG_PREFIX / CROSS_CLANG / VLC_CFLAGS / VLC_CXXFLAGS / NDK_DEBUG / MAKEFLAGS / LIBVLCJNI_SRC_DIR
+# gets TARGET_TUPLE / ANDROID_API / CLANG_PREFIX / CROSS_CLANG / VLC_CFLAGS / VLC_CXXFLAGS / MAKEFLAGS / LIBVLCJNI_SRC_DIR
 AVLC_SOURCED=1 . libvlcjni/buildsystem/compile-libvlc.sh
 
 ################
@@ -143,9 +143,11 @@ cd ${SRC_DIR}
 if [ "$RELEASE" = "1" ]; then
   MEDIALIBRARY_NDEBUG=true
   MEDIALIBRARY_OPTIMIZATION=3
+  CMAKE_DEBUG=RelWithDebInfo
 else
   MEDIALIBRARY_NDEBUG=false
   MEDIALIBRARY_OPTIMIZATION=0
+  CMAKE_DEBUG=Debug
 fi
 
 cd ${MEDIALIBRARY_BUILD_DIR}
@@ -192,6 +194,14 @@ else
 fi
 printf 'cpu = '"'"'%s'"'"'\n' "${MESON_CPU}" >&3
 
+# This isn't set for meson builds if there already is a build dir which makes
+# following builds fail
+printf '\n[properties]\n' >&3
+printf "pkg_config_libdir = ['%s', '%s', '%s']\n" \
+    "$LIBVLCJNI_SRC_DIR/vlc/build-android-${TARGET_TUPLE}/install/lib/pkgconfig" \
+    "${MEDIALIBRARY_PREFIX}/lib/pkgconfig" \
+    "$LIBVLCJNI_SRC_DIR/vlc/contrib/$TARGET_TUPLE/lib/pkgconfig" >&3
+
 if [ ! -d "build-android-$ANDROID_ABI/" ] || [ ! -f "build-android-$ANDROID_ABI/build.ninja" ]; then
     export PATH="$LIBVLCJNI_SRC_DIR/vlc/extras/tools/build/bin:$PATH"
 
@@ -225,22 +235,10 @@ avlc_checkfail "medialibrary: build failed"
 
 cd ${SRC_DIR}
 
-MEDIALIBRARY_LDLIBS="-L$LIBVLCJNI_SRC_DIR/libvlc/jni/libs/${ANDROID_ABI}/ -lvlc \
--L$LIBVLCJNI_SRC_DIR/vlc/contrib/$TARGET_TUPLE/lib -ljpeg \
--lc++abi"
-
-$NDK_BUILD -C medialibrary \
-  APP_STL="$NDK_APP_STL" \
-  LOCAL_CPP_FEATURES="rtti exceptions" \
-  LOCAL_LDFLAGS="-Wl,-z,max-page-size=16384" \
-  APP_BUILD_SCRIPT=jni/Android.mk \
-  APP_PLATFORM=android-${ANDROID_API} \
-  APP_ABI=${ANDROID_ABI} \
-  NDK_PROJECT_PATH=jni \
-  NDK_TOOLCHAIN_VERSION=clang \
-  MEDIALIBRARY_LDLIBS="${MEDIALIBRARY_LDLIBS}" \
-  MEDIALIBRARY_INCLUDE_DIR=${MEDIALIBRARY_BUILD_DIR}/include \
-  NDK_DEBUG=${NDK_DEBUG} \
-  SQLITE_RELEASE=$SQLITE_RELEASE
+cmake -S medialibrary/jni -B medialibrary/medialibrary/mla/android-${ANDROID_API}-${ANDROID_ABI} \
+    -DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake \
+    -DANDROID_ABI=${ANDROID_ABI} -DANDROID_PLATFORM=android-${ANDROID_API} -DCMAKE_BUILD_TYPE=${CMAKE_DEBUG} -DANDROID_STL=${NDK_APP_STL} \
+    -DLIBVLCJNI_SRC_DIR:PATH=${LIBVLCJNI_SRC_DIR}
+cmake --build medialibrary/medialibrary/mla/android-${ANDROID_API}-${ANDROID_ABI}
 
 avlc_checkfail "nkd-build medialibrary failed"

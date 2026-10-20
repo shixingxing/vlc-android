@@ -249,11 +249,11 @@
     <string name="remote_keyboard_navigation">Navigazione da tastiera</string>
 
     <string name="server_add_title">Aggiungi un nuovo server ai preferiti</string>
-    <string name="server_domain_hint">Indirizzo server (nome dominio o IP)</string>
-    <string name="server_share_hint">Nome condivisione di rete (o indirizzo IP)</string>
+    <string name="server_domain_hint">Indirizzo server (nome host o indirizzo IP)</string>
+    <string name="server_share_hint">Indirizzo server (nome host o indirizzo IP)</string>
     <string name="server_folder_hint">Percorso cartella (opzionale)</string>
     <string name="server_username_hint">Nome utente</string>
-    <string name="server_servername_hint">Nome del server, per comodità</string>
+    <string name="server_servername_hint">Nome visualizzato (facoltativo)</string>
     <string name="server_port">Porta:</string>
     <string name="login">Nome utente</string>
     <string name="password">Password</string>
@@ -266,8 +266,9 @@
     <string name="favorite_removed">Rimosso dai preferiti</string>
 
     <string name="streams">Flussi</string>
-    <string name="open_mrl_dialog_msg">Digita indirizzo di rete: ad es. http://, mms:// o rtsp://</string>
-    <string name="invalid_location">La posizione %1$s non può essere riprodotta.</string>
+    <string name="open_mrl_dialog_msg">Digita un indirizzo di rete, come http://, mms:// o rtsp://</string>
+    <string name="invalid_location">Il media su %1$s non può essere riprodotto.</string>
+    <string name="font_cache_building">Preparazione dei caratteri per la prima riproduzione, questo può richiedere alcuni secondi</string>
     <string name="missing_location">Questo media proviene da un\'archiviazione non disponibile e non può essere riprodotto.</string>
 
     <string name="search">Cerca</string>
@@ -1353,6 +1354,7 @@
     <string name="ra_play_on_device">Riproduci sul dispositivo</string>
     <string name="ra_browser_audio_not_found">File multimediale non trovato o non riproducibile nel browser</string>
     <string name="ra_browser_audio_unsupported_format">Questo formato audio non è supportato dal tuo browser</string>
+    <string name="ra_upload_subtitle">Aggiorna i sottotitoli</string>
 
     <string name="ra_onboarding_welcome_desc">Benvenuto nell\'accesso remoto di VLC per Android.\nAbilitandolo, sarai in grado di controllare la riproduzione di questo dispositivo e altro ancora.</string>
     <string name="ra_onboarding_how_title">Controlla il tuo dispositivo</string>

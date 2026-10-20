@@ -1,7 +1,7 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
-    ext.android_plugin_version = '8.13.2'
-    ext.kotlin_version = '2.1.20'
+    ext.android_plugin_version = '9.4.1'
+    ext.kotlin_version = '2.2.10'
     ext.kotlinx_version = '1.7.1'
     repositories {
         flatDir dirs: "gradle/plugins"
@@ -18,7 +18,7 @@ buildscript {
 }
 
 plugins {
-    id 'com.google.devtools.ksp' version '2.1.20-1.0.32' apply false
+    id 'com.google.devtools.ksp' version '2.3.6' apply false
 }
 
 allprojects {
@@ -34,21 +34,43 @@ allprojects {
         options.addStringOption('encoding', 'UTF-8')
     }
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-        kotlinOptions {
-            jvmTarget = JavaVersion.VERSION_1_8.toString()
-            freeCompilerArgs += ['-opt-in=kotlin.RequiresOptIn']
+        kotlin {
+            compilerOptions {
+                jvmTarget.set(rootProject.ext.targetJVMKotlin)
+                optIn.add("kotlin.RequiresOptIn")
+            }
+        }
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        sourceCompatibility = rootProject.ext.targetJVM.toString()
+        targetCompatibility = rootProject.ext.targetJVM.toString()
+    }
+
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            project.android {
+                compileOptions {
+                    sourceCompatibility rootProject.ext.targetJVM
+                    targetCompatibility rootProject.ext.targetJVM
+                }
+            }
         }
     }
 }
 
 ext {
     appId = "org.videolan.vlc"
-    versionCode = 3070100
+    versionCode = 3070200
     vlcMajorVersion = project.hasProperty('forceVlc4') && project.getProperty('forceVlc4') ? 4 : 3
-    versionName = vlcMajorVersion == 3 ? '3.7.1' : '4.0.0-preview - ' + versionCode
-    remoteAccessVersion = '0.17.0'
-    libvlcVersion = vlcMajorVersion == 3 ? '3.7.0' :'4.0.0-eap24'
-    medialibraryVersion = '0.13.17' + (vlcMajorVersion == 3 ? '' : '-vlc4')
+    versionName = vlcMajorVersion == 3 ? '3.7.2' : '4.0.0-preview - ' + versionCode
+    remoteAccessVersion = '0.24.0'
+    libvlcVersion = vlcMajorVersion == 3 ? '3.7.7' :'4.0.0-eap29'
+    medialibraryVersion = (vlcMajorVersion == 3 ? '0.13.24' : '0.13.22-vlc4')
+
+    targetJVM = JavaVersion.VERSION_1_8
+    targetJVMKotlin = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8
+
     Properties properties = new Properties()
     properties.load(project.rootProject.file('local.properties').newDataInputStream())
     // default ndkVersion in  android_plugin_version in 8.9.1: 27.0.12077973

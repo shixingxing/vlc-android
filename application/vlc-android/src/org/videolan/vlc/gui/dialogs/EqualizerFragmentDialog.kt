@@ -34,8 +34,12 @@ import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
+import androidx.activity.ComponentDialog
+import androidx.activity.OnBackPressedCallback
 import androidx.core.content.edit
 import androidx.core.view.children
+import androidx.core.view.isEmpty
+import androidx.core.view.isNotEmpty
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
@@ -53,7 +57,6 @@ import org.videolan.tools.Settings
 import org.videolan.tools.dp
 import org.videolan.tools.isStarted
 import org.videolan.tools.setGone
-import org.videolan.tools.setVisible
 import org.videolan.vlc.R
 import org.videolan.vlc.databinding.DialogEqualizerBinding
 import org.videolan.vlc.gui.EqualizerSettingsActivity
@@ -65,12 +68,10 @@ import org.videolan.vlc.mediadb.models.EqualizerBand
 import org.videolan.vlc.mediadb.models.EqualizerWithBands
 import org.videolan.vlc.repository.EqualizerRepository
 import org.videolan.vlc.viewmodels.EqualizerViewModel
+import org.videolan.vlc.viewmodels.EqualizerViewModel.Companion.currentEqualizerIdLive
 import org.videolan.vlc.viewmodels.EqualizerViewModelFactory
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
-import androidx.core.view.isEmpty
-import androidx.core.view.isNotEmpty
-import org.videolan.vlc.viewmodels.EqualizerViewModel.Companion.currentEqualizerIdLive
 
 
 /**
@@ -94,7 +95,7 @@ class EqualizerFragmentDialog : VLCBottomSheetDialogFragment(), Slider.OnChangeL
 
     override fun needToManageOrientation() = true
 
-    override fun initialFocusedView(): View = binding.equalizerContainer
+    override fun initialFocusedView(): View = binding.equalizerButton
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -104,8 +105,26 @@ class EqualizerFragmentDialog : VLCBottomSheetDialogFragment(), Slider.OnChangeL
         return binding.root
     }
 
+    private val backPressedCallback = object : OnBackPressedCallback(true) {
+        override fun handleOnBackPressed() {
+            if (handleBack()) return
+            dismiss()
+        }
+    }
+
+    private fun handleBack(): Boolean {
+        if (eqBandsViews.any { it.hasFocus() }) {
+            binding.equalizerPresets.children.forEach {
+                if ((it as Chip).isChecked) it.requestFocus()
+            }
+            return true
+        }
+        return false
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        (dialog as? ComponentDialog)?.onBackPressedDispatcher?.addCallback(viewLifecycleOwner, backPressedCallback)
         if (requireActivity() is EqualizerSettingsActivity) {
             binding.equalizerSettings.setGone()
         }
@@ -165,7 +184,7 @@ class EqualizerFragmentDialog : VLCBottomSheetDialogFragment(), Slider.OnChangeL
 
         binding.equalizerSettings.setOnClickListener {
             if (requireActivity() is VideoPlayerActivity)
-                UiTools.snackerConfirm(requireActivity(), getString(R.string.equalizer_leave_warning), forcedView = binding.contextMenuItemSnackbarHost) {
+                UiTools.showSnackOrDialog(requireActivity(), R.string.equalizer,getString(R.string.equalizer_leave_warning), binding.contextMenuItemSnackbarHost) {
                     startActivity(Intent(requireActivity(), EqualizerSettingsActivity::class.java))
                 }
             else
@@ -189,7 +208,7 @@ class EqualizerFragmentDialog : VLCBottomSheetDialogFragment(), Slider.OnChangeL
             } else {
                 getString(R.string.confirm_delete_vlc_eq)
             }
-            UiTools.snackerConfirm(requireActivity(), message, forcedView = binding.contextMenuItemSnackbarHost) {
+            UiTools.showSnackOrDialog(requireActivity(),R.string.equalizer, message, binding.contextMenuItemSnackbarHost) {
                 viewModel.deleteEqualizer(requireActivity())
             }
         }
@@ -241,6 +260,8 @@ class EqualizerFragmentDialog : VLCBottomSheetDialogFragment(), Slider.OnChangeL
             chip.text = item.equalizerEntry.name
             chip.tag = item.equalizerEntry.id
             chip.isCheckable = true
+            val isCurrentCustom = viewModel.isCurrentEqCustom()
+            chip.nextFocusDownId = if (!isCurrentCustom) R.id.edit else R.id.preset_title_edit
             if (item.equalizerEntry.presetIndex == -1) chip.setChipBackgroundColorResource(R.color.orange_800_transparent_10)
             if (item.equalizerEntry.id == viewModel.currentEqualizerId) {
                 selectedChip = chip
@@ -255,6 +276,10 @@ class EqualizerFragmentDialog : VLCBottomSheetDialogFragment(), Slider.OnChangeL
                 fillBands()
                 selectPreset()
                 oldCurrentEqualizer = viewModel.getCurrentEqualizer()
+                val isCurrentCustom = viewModel.isCurrentEqCustom()
+                binding.equalizerPresets.children.forEach {
+                    it.nextFocusDownId = if (!isCurrentCustom) R.id.edit else R.id.preset_title_edit
+                }
             }
             binding.equalizerPresets.addView(chip)
         }
@@ -376,7 +401,7 @@ class EqualizerFragmentDialog : VLCBottomSheetDialogFragment(), Slider.OnChangeL
     override fun onValueChange(slider: Slider, value: Float, fromUser: Boolean) {
         if (!fromUser) return
         viewModel.saveInHistory(-1)
-        viewModel.updateCurrentPreamp(requireActivity(), binding.equalizerPreamp.value)
+        viewModel.updateCurrentPreamp(binding.equalizerPreamp.value)
     }
 
 

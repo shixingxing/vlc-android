@@ -89,6 +89,7 @@ import org.videolan.vlc.R
 import org.videolan.vlc.gui.browser.BaseBrowserFragment
 import org.videolan.vlc.gui.video.VideoPlayerActivity
 import org.videolan.vlc.util.FileUtils
+import org.videolan.vlc.util.FontCache
 import org.videolan.vlc.util.awaitMedialibraryStarted
 import org.videolan.vlc.util.isSchemeFD
 import org.videolan.vlc.util.isSchemeHttpOrHttps
@@ -481,6 +482,13 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
     }
 
     suspend fun playIndex(index: Int, flags: Int = 0, forceResume:Boolean = false, forceRestart:Boolean = false) {
+        // The fonts are scanned when the first text renderer is created, which would otherwise
+        // delay the playback by several seconds on the first run. See [FontCache]
+        // Wait before reading any state, as the queue can change in the meantime
+        FontCache.await(service) {
+            service.showToast(service.getString(R.string.font_cache_building), Toast.LENGTH_LONG)
+        }
+
         videoBackground = videoBackground || (!player.isVideoPlaying() && player.canSwitchToVideo())
         if (mediaList.size() == 0) {
             Log.w(TAG, "Warning: empty media list, nothing to play !")
@@ -527,6 +535,8 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
             if (isVideoPlaying) {
                 start = if (forceRestart
                     || videoResumeStatus == ResumeStatus.NEVER) 0L else getStartTime(mw)
+                // If we explicitly restart or NEVER resume is set, ensure any leftover savedTime is cleared
+                if (start == 0L && (forceRestart || videoResumeStatus == ResumeStatus.NEVER)) savedTime = 0L
                 if (!forceResume && videoResumeStatus == ResumeStatus.ASK && start > 0 && isAppStarted()) {
                     waitForConfirmation.postValue(WaitConfirmation(mw.title, index, flags))
                     return
@@ -534,6 +544,8 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
             } else {
                 start = if (forceRestart
                     || audioResumeStatus == ResumeStatus.NEVER) 0L else getStartTime(mw)
+                // If we explicitly restart or NEVER resume is set, ensure any leftover savedTime is cleared
+                if (start == 0L && (forceRestart || audioResumeStatus == ResumeStatus.NEVER)) savedTime = 0L
                 if (!forceResume && audioResumeStatus == ResumeStatus.ASK && start > 0 && isAppStarted()) {
                     val confirmation = WaitConfirmation(mw.title, index, flags)
                     waitForConfirmationAudio.postValue(confirmation)
@@ -622,7 +634,7 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
     }
 
     fun setVideoTrackEnabled(enabled: Boolean) {
-        if (!hasMedia() || !player.isPlaying()) return
+        if (!hasMedia()) return
         if (enabled) getCurrentMedia()?.addFlags(MediaWrapper.MEDIA_VIDEO)
         else getCurrentMedia()?.removeFlags(MediaWrapper.MEDIA_VIDEO)
         player.setVideoTrackEnabled(enabled)
@@ -1207,7 +1219,9 @@ class PlaylistManager(val service: PlaybackService) : MediaWrapperList.EventList
                         savePosition()
                         saveCurrentMedia()
                         newMedia = false
-                        if (player.hasRenderer || !player.isVideoPlaying()) showAudioPlayer.value = true
+                        if (player.hasRenderer || (!player.isVideoPlaying() && (mw.hasFlag(MediaWrapper.MEDIA_FORCE_AUDIO) || !player.canSwitchToVideo()))) {
+                            showAudioPlayer.value = true
+                        }
                         savePlaycount(mw)
                         if (mw.title == mw.fileName || (mw.type == MediaWrapper.TYPE_STREAM && (mw.title != player.mediaplayer.media?.getMeta(IMedia.Meta.Title, true) || mw.artistName != player.mediaplayer.media?.getMeta(IMedia.Meta.Artist, true)))) {
                             // used for initial metadata update. We avoid the metadata load when the initial MediaPlayer.Event.ESSelected is sent to avoid race conditions

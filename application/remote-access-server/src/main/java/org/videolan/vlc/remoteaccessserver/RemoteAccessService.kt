@@ -45,6 +45,7 @@ import org.videolan.resources.ACTION_RESTART_SERVER
 import org.videolan.resources.ACTION_START_SERVER
 import org.videolan.resources.ACTION_STOP_SERVER
 import org.videolan.resources.AppContextProvider
+import org.videolan.resources.NotificationIds
 import org.videolan.resources.util.registerReceiverCompat
 import org.videolan.resources.util.startForegroundCompat
 import org.videolan.tools.KEY_ENABLE_REMOTE_ACCESS
@@ -124,6 +125,12 @@ class RemoteAccessService : LifecycleService(), CoroutineScope by MainScope() {
         super.onCreate()
         if (AndroidUtil.isOOrLater) forceForeground()
            lifecycleScope.launch(Dispatchers.IO) {
+               if (!Settings.getInstance(this@RemoteAccessService)
+                       .getBoolean(KEY_ENABLE_REMOTE_ACCESS, false)
+               ) {
+                   withContext(Dispatchers.Main) { stopSelf() }
+                   return@launch
+               }
                server = RemoteAccessServer.getInstance(applicationContext)
                if (!Settings.getInstance(this@RemoteAccessService)
                        .getBoolean(KEY_REMOTE_ACCESS_LAST_STATE_STOPPED, false)
@@ -140,7 +147,7 @@ class RemoteAccessService : LifecycleService(), CoroutineScope by MainScope() {
         filter.addAction(ACTION_START_SERVER)
         filter.addAction(ACTION_DISABLE_SERVER)
         filter.addAction(ACTION_RESTART_SERVER)
-        registerReceiverCompat(receiver, filter, false)
+        registerReceiverCompat(receiver, filter, false, "$packageName.permission.REMOTE_ACCESS_CONTROL")
     }
 
     private fun forceForeground() {
@@ -157,7 +164,7 @@ class RemoteAccessService : LifecycleService(), CoroutineScope by MainScope() {
         val started = ::server.isInitialized && server.serverStatus.value == ServerStatus.STARTED
         val notification = NotificationHelper.createRemoteAccessNotification(applicationContext, contentString, started)
         try {
-            startForegroundCompat(44, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            startForegroundCompat(NotificationIds.REMOTE_ACCESS, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
         } catch (e: Exception) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && e is ForegroundServiceStartNotAllowedException) {
                 Log.w("RemoteAccessService", "ForegroundServiceStartNotAllowedException caught!")

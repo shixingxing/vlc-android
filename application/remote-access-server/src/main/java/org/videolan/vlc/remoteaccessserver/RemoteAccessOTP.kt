@@ -26,8 +26,8 @@ package org.videolan.vlc.remoteaccessserver
 
 import android.content.Context
 import androidx.core.app.NotificationManagerCompat
+import org.videolan.resources.NotificationIds
 import org.videolan.vlc.gui.helpers.NotificationHelper
-import org.videolan.vlc.gui.helpers.REMOTE_ACCESS_CODE_ID
 import org.videolan.vlc.remoteaccessserver.ssl.SecretGenerator
 import org.videolan.vlc.remoteaccessserver.utils.CypherUtils
 import org.videolan.vlc.util.RemoteAccessUtils
@@ -37,6 +37,7 @@ import java.security.SecureRandom
 object RemoteAccessOTP {
 
     private val codes = ArrayList<OTPCode>()
+    private val secureRandom = SecureRandom()
 
     /**
      * generate an [OTPCode] and store it in memory for later use
@@ -50,7 +51,7 @@ object RemoteAccessOTP {
         return otpCode
     }
 
-    fun generateCode(): String = (SecureRandom().nextInt(899999) + 100000).toString()
+    fun generateCode(): String = (secureRandom.nextInt(900000) + 100000).toString()
 
     /**
      * Verify if the code is valid by using the challenge
@@ -63,7 +64,7 @@ object RemoteAccessOTP {
         codes.forEach {
             if (CypherUtils.hash(it.code + it.challenge) == saltedCode && System.currentTimeMillis() < it.expiration) {
                 with(NotificationManagerCompat.from(appContext)) {
-                    cancel(REMOTE_ACCESS_CODE_ID)
+                    cancel(NotificationIds.REMOTE_ACCESS_OTP.id)
                 }
                 codes.remove(it)
                 return true
@@ -92,8 +93,7 @@ object RemoteAccessOTP {
         val code = generateOTPCode()
         val notification = NotificationHelper.createRemoteAccessOtpNotification(appContext, code.code)
         with(NotificationManagerCompat.from(appContext)) {
-            // notificationId is a unique int for each notification that you must define
-            notify(REMOTE_ACCESS_CODE_ID, notification)
+            notify(NotificationIds.REMOTE_ACCESS_OTP.id, notification)
         }
         return code
     }
@@ -115,14 +115,14 @@ object RemoteAccessOTP {
     fun removeCode(appContext: Context, code: String) {
         codes.remove(codes.find { code == it.code })
         with(NotificationManagerCompat.from(appContext)) {
-            cancel(REMOTE_ACCESS_CODE_ID)
+            cancel(NotificationIds.REMOTE_ACCESS_OTP.id)
         }
     }
 
     suspend fun removeAllCodes(appContext: Context) {
         codes.clear()
         with(NotificationManagerCompat.from(appContext)) {
-            cancel(REMOTE_ACCESS_CODE_ID)
+            cancel(NotificationIds.REMOTE_ACCESS_OTP.id)
         }
         RemoteAccessUtils.otpFlow.emit(null)
     }

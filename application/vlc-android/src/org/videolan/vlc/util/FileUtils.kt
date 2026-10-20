@@ -394,47 +394,6 @@ object FileUtils {
                 if (!Permissions.canReadStorage(ctx)) {
                     uri = getFileDescriptorFromUri(data)
                 // Mail-based apps - download the stream to a temporary file and play it
-                } else if ("com.fsck.k9.attachmentprovider" == data.host || "gmail-ls" == data.host) {
-                    var inputStream: InputStream? = null
-                    var os: OutputStream? = null
-                    var cursor: Cursor? = null
-                    try {
-                        cursor = ctx.contentResolver.query(
-                            data,
-                            arrayOf(MediaStore.MediaColumns.DISPLAY_NAME), null, null, null
-                        )
-                        if (cursor != null && cursor.moveToFirst()) {
-                            val filename =
-                                cursor.getString(cursor.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME))
-                                    .replace("/", "")
-                            if (BuildConfig.DEBUG) Log.i(
-                                TAG,
-                                "Getting file $filename from content:// URI"
-                            )
-                            inputStream = ctx.contentResolver.openInputStream(data)
-                            if (inputStream == null) {
-                                Log.i("FileUtils", "Expanding uri: $data to $data")
-                                return data
-                            }
-                            os =
-                                FileOutputStream(AndroidDevices.EXTERNAL_PUBLIC_DIRECTORY + "/Download/" + filename)
-                            val buffer = ByteArray(1024)
-                            var bytesRead = inputStream.read(buffer)
-                            while (bytesRead >= 0) {
-                                os.write(buffer, 0, bytesRead)
-                                bytesRead = inputStream.read(buffer)
-                            }
-                            uri =
-                                AndroidUtil.PathToUri(AndroidDevices.EXTERNAL_PUBLIC_DIRECTORY + "/Download/" + filename)
-                        }
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Couldn't download file from mail URI: $data")
-                        return null
-                    } finally {
-                        CloseableUtils.close(inputStream)
-                        CloseableUtils.close(os)
-                        CloseableUtils.close(cursor)
-                    }
                 } else if (data.host == "com.amaze.filemanager" && data.path != null) {
                     uri = data.path!!.replace("/storage_root", "file://").toUri()
                     uri.let {
@@ -594,6 +553,48 @@ object FileUtils {
     }
 
     fun getSoundFontExtensions() = arrayOf("sf2", "sf3")
+
+    /**
+     * Get the size of a folder (recursively) or a file.
+     *
+     * @param file the folder or file to measure
+     * @return the size in bytes
+     */
+    fun getFolderSize(file: File): Long {
+        var size: Long = 0
+        if (file.isDirectory) {
+            val files = file.listFiles()
+            if (files != null) {
+                for (f in files) {
+                    size += getFolderSize(f)
+                }
+            }
+        } else {
+            size = file.length()
+        }
+        return size
+    }
+
+    /**
+     * Get the number of files in a folder (recursively).
+     *
+     * @param file the folder to scan
+     * @return the number of files
+     */
+    fun getFileCount(file: File): Int {
+        var count = 0
+        if (file.isDirectory) {
+            val files = file.listFiles()
+            if (files != null) {
+                for (f in files) {
+                    count += getFileCount(f)
+                }
+            }
+        } else {
+            count = 1
+        }
+        return count
+    }
 }
 
 fun String?.getParentFolder(): String? {
